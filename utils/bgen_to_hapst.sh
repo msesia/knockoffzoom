@@ -86,18 +86,25 @@ if [ -f $HAPS_T ]; then
   rm $HAPS_T
 fi
 
+# Remove old sample file
+SAM_FILE=$OUTPUT".sample"
+if [ -f $SAM_FILE ]; then
+  rm $SAM_FILE
+fi
+
 # Create transposed HAPS files in batches
 for INDIVIDUALS_BATCH in $INDIVIDUALS_BATCHES*; do
   BATCH_IDX="${INDIVIDUALS_BATCH##*.}"
 
   # Convert haplotypes into HAPS format for all individuals in this batch
-  echo "Converting BGEN haplotypes into transposed HAPS format for $BATCH_IDX"  
+  echo ""
+  echo "Converting BGEN haplotypes into transposed HAPS format for $BATCH_IDX ..."
   HAPS_BATCH=$OUTPUT".batch"
   plink2 --bgen $INPUT".bgen" --sample $INPUT".sample" --oxford-single-chr $CHR \
          --keep $INDIVIDUALS_BATCH --extract $VARIANTS --export hapslegend --out $OUTPUT".batch"
 
   # Transpose HAPS for this batch and append them to the full HAPS.T file
-  echo "Transposing haplotypes for "$BATCH_IDX
+  echo "Transposing haplotypes for "$BATCH_IDX" ..."
   datamash transpose -W --output-delimiter=" " < $OUTPUT".batch.haps" > $HAPS_T"."$BATCH_IDX
 
   # Append sample file for this batch to the full sample file
@@ -119,6 +126,9 @@ for INDIVIDUALS_BATCH in $INDIVIDUALS_BATCHES*; do
   rm $OUTPUT".batch.log"
 
 done
+
+echo ""
+echo "Done. Results written on: "$HAPS_T
 
 # Rename temporary legend file
 mv $OUTPUT".batch.legend" $OUTPUT".legend"

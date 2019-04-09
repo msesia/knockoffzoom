@@ -52,7 +52,6 @@ while getopts ":i:o:" opt; do
       ;;
   esac
 done
-echo ""
 
 # Convert transposed HAPS file into INP file
 HAPS_T=$INPUT".haps.t"
@@ -78,3 +77,6 @@ paste -d "" $TMP1_FILE $TMP2_FILE > $INP_FILE
 
 # Clean up remporary files
 rm $TMP1_FILE $TMP2_FILE
+
+echo ""
+echo "Done. Results written on: "$INP_FILE
