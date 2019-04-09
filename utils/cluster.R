@@ -32,23 +32,24 @@ local.source <- function(script.name) {
 }
 
 # Default arguments (for debugging)
-dendro.file  <- "../tmp/example_chr21.RData"
-bim.file     <- "../data/genotypes/example_chr21.bim"
-qc.file      <- "../data/qc/variants_qc.txt"
-resolution   <- 2
-out.basename <- "../tmp/example_chr21"
+ld.file    <- "../tmp/example_chr21.ld"
+bim.file   <- "../data/genotypes/example_chr21.bim"
+qc.file    <- "../data/qc/variants_qc.txt"
+out.file   <- "../tmp/example_chr21.RData"
 
 # Input arguments
 args <- commandArgs(trailingOnly=TRUE)
-dendro.file  <- as.character(args[1])
-bim.file     <- as.character(args[2])
-qc.file      <- as.character(args[3])
-resolution   <- round(as.numeric(args[4]))
-out.basename <- as.character(args[5])
+ld.file  <- as.character(args[1])
+bim.file <- as.character(args[2])
+qc.file  <- as.character(args[3])
+out.file <- as.character(args[4])
 
 # Load libraries
 suppressMessages(library(tidyverse))
 local.source("utils.R")
+
+# Standard parameters
+ld.measure <- "R"  # R^2
 
 # Load list of variants
 Variants <- read_delim(bim.file, delim="\t", col_names=c("CHR", "SNP", "X", "BP", "A1", "A2"), col_types=cols())
@@ -57,28 +58,33 @@ Variants <- read_delim(bim.file, delim="\t", col_names=c("CHR", "SNP", "X", "BP"
 variants.qc <- read_delim(qc.file, delim=" ", col_names="SNP", col_types=cols())
 Variants <- Variants %>% inner_join(variants.qc, by="SNP")
 
-# Load clustering dendrogram
-cat("Loading clustering dendrogram... ")
-load(dendro.file)
+# Load sparse covariance matrix
+cat("Loading covariance matrix... ")   
+LD <- read_table2(ld.file, col_types=cols())
+LD <- filter(LD, BP_A %in% Variants$BP, BP_B %in% Variants$BP)
 cat("done.\n")
 
-# Choose groups by cutting the dendrogram
-groups <- cutree(Sigma.clust, k = round(0.01*resolution*nrow(Variants)))
-n.groups <- max(groups)
-cat(sprintf("Divided %d variables into %d groups\n", length(groups), n.groups))
+# Convert LD to a symmetric square matrix
+cat("Converting LD table to LD matrix... ")   
+LD.variants <- unique(c(LD$SNP_A, LD$SNP_B))
+LD.positions <- unique(c(LD$BP_A, LD$BP_B))
+Sigma <- ld.to.mat(LD, ld.measure, Variants$BP)
+cat("done.\n")
 
-# Verify that the groups are nested
-cat(sprintf("Checking whether the groups are nested... "))
-are.nested <- is.dendrogram.nested(Sigma.clust, resolution.list=seq(1,100,length.out=10))
-cat(sprintf("%s\n",are.nested))
+# Convert covariance matrix to distance matrix
+cat("Converting LD matrix to distance matrix... ")   
+#Sigma.dist <- as.dist(1-abs(Sigma))                 # Faster, but requires lots of memory
+Sigma.dist <- mat.to.dist(tril(Sigma,-1))            # Slower, but requires less memory
+cat("done.\n")
 
-# Show distribution of group sizes
-cat(sprintf("Distribution of group sizes at resolution %d%%:\n", round(resolution)))
-group.sizes <- sapply(1:n.groups, function(g) {sum(groups==g)} )
-table(group.sizes)
+cat("Computing clustering dendrogram... ")   
+if(nrow(Sigma) > 10000) {
+    Sigma.clust <- adjClust(Sigma.dist,h=10000)       # Makes contiguous groups
+} else {
+    Sigma.clust <- adjClust(Sigma.dist)               # Makes contiguous groups
+}
+cat("done.\n")
 
-# Write list of grouped variants
-Variants.grouped <- mutate(Variants, Group = groups)
-out.file <- sprintf("%s_groups%d.txt", out.basename, round(resolution))
-write_delim(Variants.grouped, out.file)
-cat(sprintf("Variant partition written on: %s\n", out.file))
+# Save dendrogram
+save(list=c("Sigma.clust"), file=out.file)
+cat(sprintf("Dendrogram saved in: %s\n", out.file))

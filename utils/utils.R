@@ -1,6 +1,7 @@
 suppressMessages(library(adjclust))
 suppressMessages(library(tidyverse))
 suppressMessages(library(data.table))
+suppressMessages(library(Matrix))
 
 read.inp <- function(basename, n.skip=0, n.load=Inf, progress=FALSE) {
     # Read haplotype sequences from INP file
@@ -253,7 +254,7 @@ cut.dendrogram <- function(dendrogram, h=NULL, k=NULL) {
 }
 
 is.dendrogram.nested <- function(dendrogram, resolution.list=c(1,2,5,10,20,50)) {
-   # Choose groups by cutting the dendrogram
+    # Choose groups by cutting the dendrogram
     resolution.list <- resolution.list/100
     groups.list <- sapply(resolution.list, function(resolution) {
         cutree(Sigma.clust, k = round(resolution*nrow(Variants)))

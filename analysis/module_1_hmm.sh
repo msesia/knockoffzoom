@@ -3,7 +3,7 @@
 #
 # Class: script
 #
-# Prepare phased haplotype for use with fastPHASE
+# Convert phased haplotypes and estimate HMM with fastPHASE
 #
 # Authors: Matteo Sesia
 # Date:    07/19/2018
@@ -23,8 +23,8 @@ CHR_LIST=$(seq 21 22)
 # Which operations should we perform?
 FLAG_CONVERT_HAP=0
 FLAG_CONVERT_INP=0
-FLAG_CHECK_INP=0
-FLAG_RUN_FASTPHASE=1
+FLAG_CHECK_INP=1
+FLAG_RUN_FASTPHASE=0
 
 ##########################################
 # Convert BGEN v1.2 into transposed HAPS #
@@ -46,22 +46,22 @@ if [[ $FLAG_CONVERT_HAP == 1 ]]; then
     BGEN_BASENAME="../data/haplotypes/example_chr"$CHR
 
     # List of individuals that passed QC
-    BGEN_SAMPLE="../data/qc/samples_qc.txt"
+    QC_SAMPLES="../data/qc/samples_qc.txt"
 
     # List of variants that passed QC
-    BGEN_VARIANT="../data/qc/variants_qc.txt"
+    QC_VARIANTS="../data/qc/variants_qc.txt"
 
     # Basename for output haplotype files (transposed HAPS format)
     HAP_BASENAME=$TMP_DIR"/example_chr"$CHR
 
     # Convert BGEN haplotypes to transposed HAPS file
-    $BGEN_TO_HAPST -i $BGEN_BASENAME -c $CHR -n $BGEN_SAMPLE -v $BGEN_VARIANT -b 500 -o $HAP_BASENAME
+    $BGEN_TO_HAPST -i $BGEN_BASENAME -c $CHR -n $QC_SAMPLES -v $QC_VARIANTS -b 500 -o $HAP_BASENAME
 
   done
 else
   echo ""
   echo "----------------------------------------------------------------------------------------------------"
-  echo "Skipping coversion of haplotypes into HAPS.T format"
+  echo "Skipping conversion of haplotypes into HAPS.T format"
   echo "----------------------------------------------------------------------------------------------------"
 fi
 
@@ -116,8 +116,14 @@ if [[ $FLAG_CHECK_INP == 1 ]]; then
     # Basename for the input genotype files (PLINK format)
     GENO_BASENAME="../data/genotypes/example_chr"$CHR
 
+    # List of individuals that passed QC
+    QC_SAMPLES="../data/qc/samples_qc.txt"
+
+    # List of variants that passed QC
+    QC_VARIANTS="../data/qc/variants_qc.txt"
+
     # Check whether the reference alleles match
-    $VERIFY_HAPS $HAP_BASENAME $GENO_BASENAME $HAP_BASENAME
+    $VERIFY_HAPS $HAP_BASENAME $GENO_BASENAME $HAP_BASENAME $QC_SAMPLES $QC_VARIANTS
 
   done
 else
