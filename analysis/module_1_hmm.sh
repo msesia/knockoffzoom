@@ -11,6 +11,7 @@
 # Utility scripts
 BGEN_TO_HAPST="../utils/bgen_to_hapst.sh"
 HAPST_TO_INP="../utils/hapst_to_inp.sh"
+VERIFY_HAPS="Rscript --vanilla ../utils/verify_haps.R"
 
 # Temporary storage of intermediate files
 TMP_DIR="../tmp"
@@ -20,14 +21,16 @@ mkdir -p $TMP_DIR
 CHR_LIST=$(seq 21 22)
 
 # Which operations should we perform?
-CONVERT_HAPLOTYPES_HAP=0
-CONVERT_HAPLOTYPES_INP=1
+FLAG_CONVERT_HAP=0
+FLAG_CONVERT_INP=0
+FLAG_CHECK_INP=0
+FLAG_RUN_FASTPHASE=1
 
 ##########################################
 # Convert BGEN v1.2 into transposed HAPS #
 ##########################################
 
-if [[ $CONVERT_HAPLOTYPES_HAP == 1 ]]; then
+if [[ $FLAG_CONVERT_HAP == 1 ]]; then
   echo ""
   echo "----------------------------------------------------------------------------------------------------"
   echo "Converting haplotypes into HAPS.T format"
@@ -65,7 +68,7 @@ fi
 ########################################
 # Convert HAPS.T into INP
 ########################################
-if [[ $CONVERT_HAPLOTYPES_INP == 1 ]]; then
+if [[ $FLAG_CONVERT_INP == 1 ]]; then
   echo ""
   echo "----------------------------------------------------------------------------------------------------"
   echo "Converting haplotypes into INP format"
@@ -91,41 +94,75 @@ else
   echo "----------------------------------------------------------------------------------------------------"
 fi
 
-exit
+############################################
+# Cross-reference haplotypes and genotypes #
+############################################
+if [[ $FLAG_CHECK_INP == 1 ]]; then
 
-########################################
-# Convert BED into RAW
-########################################
-if [[ ! -f $BASENAME_GEN".raw" ]] || [[ $RESET -eq 1 ]]; then
-  echo ""
-  echo "----------------------------------------------------------------------------------------------------"
-  echo "Converting genotypes into RAW format"
-  echo "----------------------------------------------------------------------------------------------------"
-  plink2 --bfile $GENOTYPES --keep $INDIVIDUALS --extract $VARIANTS --export A --out $BASENAME_GEN
-  rm $BASENAME_GEN".log"
-else
-  echo ""
-  echo "----------------------------------------------------------------------------------------------------"
-  echo "Skipping conversion of haplotypes into RAW format because"
-  echo $BASENAME_GEN".raw exists"
-  echo "----------------------------------------------------------------------------------------------------"
-fi
-
-########################################
-# Cross-reference haplotypes and genotypes
-########################################
-if [[ ! -f $BASENAME_HAP".ref" ]] || [[ $RESET -eq 1 ]]; then
   echo ""
   echo "----------------------------------------------------------------------------------------------------"
   echo "Cross-referencing haplotypes and genotypes"
   echo "----------------------------------------------------------------------------------------------------"
-  ml gcc
-  ml R
-  Rscript --vanilla utils/crossref_alleles.R $CHR
+
+  for CHR in $CHR_LIST; do
+
+    echo ""
+    echo "Processing chromosome "$CHR" ..."
+    echo ""
+
+    # Basename for output haplotype files (transposed HAPS format)
+    HAP_BASENAME=$TMP_DIR"/example_chr"$CHR
+
+    # Basename for the input genotype files (PLINK format)
+    GENO_BASENAME="../data/genotypes/example_chr"$CHR
+
+    # Check whether the reference alleles match
+    $VERIFY_HAPS $HAP_BASENAME $GENO_BASENAME $HAP_BASENAME
+
+  done
 else
   echo ""
   echo "----------------------------------------------------------------------------------------------------"
-  echo "Skipping Cross-reference of haplotypes and genotypes because"
-  echo $BASENAME_HAP".ref exists"
+  echo "Skipping cross-reference of haplotypes and genotypes"
+  echo "----------------------------------------------------------------------------------------------------"
+fi
+
+
+###############################
+# Estimate HMM with fastPHASE #
+###############################
+if [[ $FLAG_RUN_FASTPHASE == 1 ]]; then
+
+  echo ""
+  echo "----------------------------------------------------------------------------------------------------"
+  echo "Estimating HMM with fastPHASE"
+  echo "----------------------------------------------------------------------------------------------------"
+
+  for CHR in $CHR_LIST; do
+
+    echo ""
+    echo "Processing chromosome "$CHR" ..."
+    echo ""
+
+    # fastPHASE parameters
+    FP_K=20         # Number of haplotype motifs
+    FP_IT=10        # Number of EM iterations
+    FP_SEED=123     # Random seed (this doesn't actually do anything because of bug in fastPhase)
+
+    # Haplotypes in INP format
+    HAP_INP=$TMP_DIR"/example_chr"$CHR".inp"
+
+    # Basename for output files
+    OUT_BASENAME=$TMP_DIR"/example_chr"$CHR
+
+    # Run fastPHASE on this chromosome
+    CMD="fastphase -Pp -T1 -K"$FP_K" -g -H-4 -B -C"$FP_IT" -S"$FP_SEED" -o"$OUT_BASENAME" "$HAP_INP
+    $CMD
+
+  done
+else
+  echo ""
+  echo "----------------------------------------------------------------------------------------------------"
+  echo "Skipping estimation of HMM with fastPHASE"
   echo "----------------------------------------------------------------------------------------------------"
 fi
