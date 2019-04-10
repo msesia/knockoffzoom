@@ -2,7 +2,10 @@
 #
 #
 
-Rscript --vanilla makedata.R
+#####################
+# Make genetic data #
+#####################
+Rscript --vanilla make_genetic.R
 
 CHR_LIST=$(seq 21 22)
 
@@ -43,6 +46,7 @@ mkdir -p $QC_DIR
 awk '{ print $1,$2 }' $GEN_DIR"/example_chr21.fam" > $QC_DIR"/samples_qc.txt"
 
 # List of variants that passed QC
+rm -f $QC_DIR"/variants_qc.txt"
 touch $QC_DIR"/variants_qc.txt"
 for CHR in $CHR_LIST; do
   awk '{ print $2 }' $GEN_DIR"/example_chr"$CHR".bim" >> $QC_DIR"/variants_qc.txt"
@@ -56,3 +60,7 @@ cp -r "/scratch/groups/candes/ukbiobank_public/data/haplotypes" "../data/"
 cp -r "/scratch/groups/candes/ukbiobank_public/data/qc" "../data/"
 cp -r "/scratch/groups/candes/ukbiobank_public/data/hmm" "../data/"
 
+###################
+# Make phenotypes #
+###################
+Rscript --vanilla make_phenotypes.R

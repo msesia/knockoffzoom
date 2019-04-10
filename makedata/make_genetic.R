@@ -119,8 +119,12 @@ X <- H[seq(1,2*n.samples,2),] + H[seq(2,2*n.samples,2),]
 # Choose sex of individuals
 X.sex <- 1+rbinom(nrow(X),1,0.5)
 
+# Variant names
 colnames(X) <- variants.clean$SNP
-rownames(X) <- str_pad(seq(1, nrow(X)), 4, pad="0")
+
+# Sample IDs (make sure they all have the same length)
+rownames(X) <- nrow(X) + seq(1, nrow(X)) - 1
+
 # Save genotypes into PLINK format, chromosome-by-chromosome
 for(chr in chr.list){
     cat(sprintf("Saving genotypes on chromosome %d.\n", chr))

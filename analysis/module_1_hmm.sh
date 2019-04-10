@@ -13,7 +13,7 @@ TMP_DIR="../tmp"
 mkdir -p $TMP_DIR
 
 # List of chromosomes
-CHR_LIST=$(seq 21 21)
+CHR_LIST=$(seq 21 22)
 
 # Utility scripts
 BGEN_TO_HAPST="../utils/bgen_to_hapst.sh"
@@ -21,8 +21,8 @@ HAPST_TO_INP="../utils/hapst_to_inp.sh"
 VERIFY_HAPS="Rscript --vanilla ../utils/verify_haps.R"
 
 # Which operations should we perform?
-FLAG_CONVERT_HAP=0
-FLAG_CONVERT_INP=0
+FLAG_CONVERT_HAP=1
+FLAG_CONVERT_INP=1
 FLAG_RUN_FASTPHASE=1
 
 ##########################################

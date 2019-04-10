@@ -17,10 +17,10 @@ OUT_DIR="../results"
 mkdir -p $OUT_DIR
 
 # List of chromosomes
-CHR_LIST=$(seq 21 21)
+CHR_LIST=$(seq 21 22)
 
 # List of resolutions
-RESOLUTION_LIST=("2")
+RESOLUTION_LIST=("2" "10")
 
 # Utility scripts
 GENERATE_KNOCKOFFS="Rscript --vanilla ../utils/knockoffs.R"
@@ -28,7 +28,7 @@ KNOCKOFF_GOF="Rscript --vanilla ../utils/knockoffs_gof.R"
 TEST_GOF="Rscript --vanilla ../utils/test_gof.R"
 
 # Which operations should we perform?
-FLAG_GENERATE_KNOCKOFFS=0
+FLAG_GENERATE_KNOCKOFFS=1
 FLAG_KNOCKOFF_GOF=1
 
 ######################
