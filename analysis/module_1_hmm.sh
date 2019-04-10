@@ -21,9 +21,8 @@ HAPST_TO_INP="../utils/hapst_to_inp.sh"
 VERIFY_HAPS="Rscript --vanilla ../utils/verify_haps.R"
 
 # Which operations should we perform?
-FLAG_CONVERT_HAP=1
-FLAG_CONVERT_INP=1
-FLAG_CHECK_INP=1
+FLAG_CONVERT_HAP=0
+FLAG_CONVERT_INP=0
 FLAG_RUN_FASTPHASE=1
 
 ##########################################
@@ -94,46 +93,6 @@ else
   echo "----------------------------------------------------------------------------------------------------"
 fi
 
-############################################
-# Cross-reference haplotypes and genotypes #
-############################################
-if [[ $FLAG_CHECK_INP == 1 ]]; then
-
-  echo ""
-  echo "----------------------------------------------------------------------------------------------------"
-  echo "Cross-referencing haplotypes and genotypes"
-  echo "----------------------------------------------------------------------------------------------------"
-
-  for CHR in $CHR_LIST; do
-
-    echo ""
-    echo "Processing chromosome "$CHR" ..."
-    echo ""
-
-    # Basename for haplotype file (INP format)
-    HAP_BASENAME=$TMP_DIR"/example_chr"$CHR
-
-    # Basename for the input genotype files (PLINK format)
-    GENO_BASENAME="../data/genotypes/example_chr"$CHR
-
-    # List of individuals that passed QC
-    QC_SAMPLES="../data/qc/samples_qc.txt"
-
-    # List of variants that passed QC
-    QC_VARIANTS="../data/qc/variants_qc.txt"
-
-    # Check whether the reference alleles match
-    $VERIFY_HAPS $HAP_BASENAME $GENO_BASENAME $HAP_BASENAME $QC_SAMPLES $QC_VARIANTS
-
-  done
-else
-  echo ""
-  echo "----------------------------------------------------------------------------------------------------"
-  echo "Skipping cross-reference of haplotypes and genotypes"
-  echo "----------------------------------------------------------------------------------------------------"
-fi
-
-
 ###############################
 # Estimate HMM with fastPHASE #
 ###############################
@@ -151,9 +110,9 @@ if [[ $FLAG_RUN_FASTPHASE == 1 ]]; then
     echo ""
 
     # fastPHASE parameters
-    FP_K=20         # Number of haplotype motifs
-    FP_IT=25        # Number of EM iterations
-    FP_SEED=123     # Random seed (this doesn't actually do anything because of bug in fastPhase)
+    FP_K=50         # Number of haplotype motifs
+    FP_IT=15        # Number of EM iterations
+    FP_SEED=1234    # Random seed
 
     # Haplotypes in INP format
     HAP_INP=$TMP_DIR"/example_chr"$CHR".inp"

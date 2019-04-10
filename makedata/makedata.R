@@ -96,7 +96,7 @@ names(hmm.list) <- chr.list
 #######################
 
 # Generate haplotype sequences, chromosome-by-chromosome
-n.samples <- 5000
+n.samples <- 1000
 n <- 2 * n.samples
 cat(sprintf("Generating haplotypes for %d subjects... ", n.samples))
 H.list <- lapply(chr.list, function(chr) {

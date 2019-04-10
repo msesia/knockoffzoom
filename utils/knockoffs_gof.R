@@ -81,7 +81,7 @@ cat(sprintf("Plot saved on: %s\n", frq.pfile))
 
 # Load LD table
 ld.file <- sprintf("%s.ld", stats.basename)
-LD <- read_table2(ld.file, col_types=cols()) %>% select(-X9) %>%
+LD <- read_table2(ld.file, col_types=cols()) %>%
     mutate(CHR=CHR_A) %>% select(-CHR_A, -CHR_B)
 
 # Add grouping information
@@ -106,24 +106,43 @@ LD <- LD %>%
 
 # Create correlation tables between different groups
 group.range <- seq(0,10)
-LD.XX <- LD %>% filter(abs(Group_B-Group_A) %in% group.range, Knockoff_A==FALSE, Knockoff_B==FALSE) %>%
+LD.XX <- LD %>%
+    filter(abs(Group_B-Group_A) %in% group.range, Knockoff_A==FALSE, Knockoff_B==FALSE) %>%
     mutate(R.XX=R2) %>%
     mutate(SNP_A=str_replace(SNP_A,".A",""), SNP_A=str_replace(SNP_A,".B","")) %>%
     mutate(SNP_B=str_replace(SNP_B,".A",""), SNP_B=str_replace(SNP_B,".B","")) %>%
     select(Group_A, Group_B, SNP_A, SNP_B, R.XX) %>%
     distinct(Group_A, Group_B, SNP_A, SNP_B, R.XX)
-LD.XXk <- LD %>% filter((Group_B-Group_A) %in% seq(1,10), Knockoff_A*Knockoff_B==FALSE) %>%
-    mutate(R.XXk=R2) %>%
-    mutate(SNP_A=str_replace(SNP_A,".A",""), SNP_A=str_replace(SNP_A,".B","")) %>%
-    mutate(SNP_B=str_replace(SNP_B,".A",""), SNP_B=str_replace(SNP_B,".B","")) %>%
-    select(Group_A, Group_B, SNP_A, SNP_B, R.XXk) %>%
-    distinct(Group_A, Group_B, SNP_A, SNP_B, R.XXk)
-LD.XkXk <- LD %>% filter(abs(Group_B-Group_A) %in% group.range, Knockoff_A==TRUE, Knockoff_B==TRUE) %>%
+LD.XkXk <- LD %>%
+    filter(abs(Group_B-Group_A) %in% group.range, Knockoff_A==TRUE, Knockoff_B==TRUE) %>%
     mutate(R.XkXk=R2) %>%
     mutate(SNP_A=str_replace(SNP_A,".A",""), SNP_A=str_replace(SNP_A,".B","")) %>%
     mutate(SNP_B=str_replace(SNP_B,".A",""), SNP_B=str_replace(SNP_B,".B","")) %>%
     select(Group_A, Group_B, SNP_A, SNP_B, R.XkXk) %>%
     distinct(Group_A, Group_B, SNP_A, SNP_B, R.XkXk)
+LD.XXk <- LD %>%
+    filter((Group_B-Group_A) %in% seq(1,10), Knockoff_A*Knockoff_B==FALSE) %>%
+    mutate(R.XXk=R2) %>%
+    mutate(SNP_A=str_replace(SNP_A,".A",""), SNP_A=str_replace(SNP_A,".B","")) %>%
+    mutate(SNP_B=str_replace(SNP_B,".A",""), SNP_B=str_replace(SNP_B,".B","")) %>%
+    select(Group_A, Group_B, SNP_A, SNP_B, R.XXk) %>%
+    distinct(Group_A, Group_B, SNP_A, SNP_B, R.XXk)
+
+# Plot originality
+LD.cross <- inner_join(LD.XX, LD.XkXk, by = c("Group_A", "Group_B", "SNP_A", "SNP_B"))
+p.orig <- LD.cross %>%
+    mutate(Distance = as.factor(abs(Group_A-Group_B))) %>%
+    ggplot(aes(x=abs(R.XX), y=abs(R.XkXk))) +
+    geom_abline(color="red") +
+    geom_point(alpha=0.1) +
+    xlim(0,1) + ylim(0,1) +
+    theme_bw()
+p.orig
+
+# Save plot
+orig.pfile <- sprintf("%s_orig.png", out.basename)
+ggsave(orig.pfile, plot=p.orig, width = 4, height = 4, dpi = 300, units = c("in", "cm", "mm"))
+cat(sprintf("Plot saved on: %s\n", orig.pfile))
 
 # Plot exchangeability
 options(repr.plot.width=4, repr.plot.height=3)
@@ -142,23 +161,6 @@ p.exch
 exch.pfile <- sprintf("%s_exch.png", out.basename)
 ggsave(exch.pfile, plot=p.exch, width = 4, height = 4, dpi = 300, units = c("in", "cm", "mm"))
 cat(sprintf("Plot saved on: %s\n", exch.pfile))
-
-# Plot originality
-LD.cross <- inner_join(LD.XX, LD.XkXk, by = c("Group_A", "Group_B", "SNP_A", "SNP_B")) %>%
-        filter(Group_A!=Group_B)
-p.orig <- LD.cross %>%
-    mutate(Distance = as.factor(abs(Group_A-Group_B))) %>%
-    ggplot(aes(x=abs(R.XX), y=abs(R.XkXk))) +
-    geom_abline(color="red") +
-    geom_point(alpha=0.1) +
-    xlim(0,1) + ylim(0,1) +
-    theme_bw()
-p.orig
-
-# Save plot
-orig.pfile <- sprintf("%s_orig.png", out.basename)
-ggsave(orig.pfile, plot=p.orig, width = 4, height = 4, dpi = 300, units = c("in", "cm", "mm"))
-cat(sprintf("Plot saved on: %s\n", orig.pfile))
 
 # Plot histogram of self-correlations
 p.self <- LD %>% filter(BP_A==BP_B) %>%

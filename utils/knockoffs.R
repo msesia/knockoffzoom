@@ -168,3 +168,17 @@ cat("\n")
 
 cat(sprintf("Done. Results written on: %s\n", knock.file.gen))
 stopCluster(cl)
+
+
+if(FALSE) {
+
+    # Compare SNP column means
+    plot(colMeans(X),colMeans(Xk),col=rgb(0,0,0,alpha=0.1), pch=16,cex=1); abline(a=0, b=1, col='red', lty=2)
+    
+    # Compare correlations between consecutive SNPs
+    corrX = unlist(lapply(seq(1,10), function(dj) { sapply((1+dj):ncol(X), function(j) cor(X[,j-dj],X[,j])) }))
+    corrXk = unlist(lapply(seq(1,10), function(dj) { sapply((1+dj):ncol(X), function(j) cor(Xk[,j-dj],Xk[,j])) }))
+    plot(corrX,corrXk,col=rgb(0,0,0,alpha=0.1), pch=16,cex=1); abline(a=0, b=1, col='red', lty=2)
+    plot(corrX^2,corrXk^2,col=rgb(0,0,0,alpha=0.1), pch=16,cex=1); abline(a=0, b=1, col='red', lty=2)
+
+}

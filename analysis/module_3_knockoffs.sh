@@ -25,9 +25,10 @@ RESOLUTION_LIST=("2")
 # Utility scripts
 GENERATE_KNOCKOFFS="Rscript --vanilla ../utils/knockoffs.R"
 KNOCKOFF_GOF="Rscript --vanilla ../utils/knockoffs_gof.R"
+TEST_GOF="Rscript --vanilla ../utils/test_gof.R"
 
 # Which operations should we perform?
-FLAG_GENERATE_KNOCKOFFS=1
+FLAG_GENERATE_KNOCKOFFS=0
 FLAG_KNOCKOFF_GOF=1
 
 ######################
@@ -74,7 +75,7 @@ if [[ $FLAG_GENERATE_KNOCKOFFS == 1 ]]; then
       --make-bed \
       --out $OUT_BASENAME
 
-    # Add subject information to FAM file  
+    # Add subject information to FAM file
     SEX_FILE="../tmp/example_chr"$CHR".sample"
     awk 'FNR > 2 { print $1,$4 }' $SEX_FILE > $OUT_BASENAME".sex"
     awk '{ print $1,$2,$3,$4,$6 }' $OUT_BASENAME".fam"> $OUT_BASENAME".fam.tmp"
@@ -83,7 +84,7 @@ if [[ $FLAG_GENERATE_KNOCKOFFS == 1 ]]; then
     rm $OUT_BASENAME".fam.tmp"
     rm $OUT_BASENAME".fam.tmp2"
     rm $OUT_BASENAME".sex"
-    
+
     # Remove PED file
     rm $OUT_BASENAME".ped"
 
@@ -123,7 +124,7 @@ if [[ $FLAG_KNOCKOFF_GOF == 1 ]]; then
     plink \
       --bfile $KNOCKOFF_BASENAME \
       --freq \
-      --r2 dprime --ld-window 1000 --ld-window-kb 1000 --ld-window-r2 0.01 \
+      --r2 --ld-window 100 --ld-window-kb 1000 --ld-window-r2 0.01 \
       --memory 1000 \
       --out $STATS_BASENAME
 
