@@ -16,8 +16,12 @@ p.keep <- 1000
 # Download the archived HAPMAP data
 url.hap <- "https://mathgen.stats.ox.ac.uk/wtccc-software/rel21_poly/HapMap_rel21_b35_CEU.tgz"
 url.map <- "https://mathgen.stats.ox.ac.uk/wtccc-software/recombination_rates/genetic_map_b35_CEU.tgz"
-download.file(url.hap,destfile=sprintf("%s/tmp/tmp.hap.tgz", scratch))
-download.file(url.map,destfile=sprintf("%s/tmp/tmp.map.tgz", scratch))
+if(!file.exists(sprintf("%s/tmp/tmp.hap.tgz", scratch))) {
+    download.file(url.hap,destfile=sprintf("%s/tmp/tmp.hap.tgz", scratch))
+}
+if(!file.exists(sprintf("%s/tmp/tmp.map.tgz", scratch))) {
+    download.file(url.map,destfile=sprintf("%s/tmp/tmp.map.tgz", scratch))
+}
 
 dictionary <- NULL
 variants <- NULL
@@ -75,12 +79,13 @@ hmm.list <- lapply(chr.list, function(chr) {
     # Write H as inp
     Hinp_file <- SNPknock.fp.writeX(t(H), phased=TRUE)
     # Call fastPhase and return the path to the parameter estimate files
-    fp_outPath <- SNPknock.fp.runFastPhase(fp_path, Hinp_file, K=30, numit=15, phased=TRUE)
+    fp_out_path <- sprintf("%s/hmm/example_chr%d", scratch, chr)
+    SNPknock.fp.runFastPhase(fp_path, Hinp_file, K=10, numit=15, phased=TRUE, out_path=fp_out_path)
     # Load the HMM
-    r_file <- paste(fp_outPath, "_rhat.txt", sep="")
-    theta_file <- paste(fp_outPath, "_thetahat.txt", sep="")
-    alpha_file <- paste(fp_outPath, "_alphahat.txt", sep="")
-    char_file <- paste(fp_outPath, "_origchars", sep="")
+    r_file <- paste(fp_out_path, "_rhat.txt", sep="")
+    theta_file <- paste(fp_out_path, "_thetahat.txt", sep="")
+    alpha_file <- paste(fp_out_path, "_alphahat.txt", sep="")
+    char_file <- paste(fp_out_path, "_origchars", sep="")
     hmm.chr <- SNPknock.fp.loadFit_hmm(r_file, alpha_file, theta_file, char_file, phased=TRUE)
     return(hmm.chr)
 })
@@ -91,8 +96,9 @@ names(hmm.list) <- chr.list
 #######################
 
 # Generate haplotype sequences, chromosome-by-chromosome
-n.samples <- 1000
+n.samples <- 5000
 n <- 2 * n.samples
+cat(sprintf("Generating haplotypes for %d subjects... ", n.samples))
 H.list <- lapply(chr.list, function(chr) {
     # Extract hmm for this chromosome
     hmm <- hmm.list[[as.character(chr)]]
@@ -101,6 +107,7 @@ H.list <- lapply(chr.list, function(chr) {
     return(H.chr)
 })
 H <- do.call("cbind", H.list)
+cat("done. \n")
 
 # Convert haplotypes to genotypes
 X <- H[seq(1,2*n.samples,2),] + H[seq(2,2*n.samples,2),]

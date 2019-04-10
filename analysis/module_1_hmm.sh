@@ -8,23 +8,23 @@
 # Authors: Matteo Sesia
 # Date:    07/19/2018
 
-# Utility scripts
-BGEN_TO_HAPST="../utils/bgen_to_hapst.sh"
-HAPST_TO_INP="../utils/hapst_to_inp.sh"
-VERIFY_HAPS="Rscript --vanilla ../utils/verify_haps.R"
-
 # Temporary storage of intermediate files
 TMP_DIR="../tmp"
 mkdir -p $TMP_DIR
 
 # List of chromosomes
-CHR_LIST=$(seq 21 22)
+CHR_LIST=$(seq 21 21)
+
+# Utility scripts
+BGEN_TO_HAPST="../utils/bgen_to_hapst.sh"
+HAPST_TO_INP="../utils/hapst_to_inp.sh"
+VERIFY_HAPS="Rscript --vanilla ../utils/verify_haps.R"
 
 # Which operations should we perform?
-FLAG_CONVERT_HAP=0
-FLAG_CONVERT_INP=0
+FLAG_CONVERT_HAP=1
+FLAG_CONVERT_INP=1
 FLAG_CHECK_INP=1
-FLAG_RUN_FASTPHASE=0
+FLAG_RUN_FASTPHASE=1
 
 ##########################################
 # Convert BGEN v1.2 into transposed HAPS #
@@ -51,7 +51,7 @@ if [[ $FLAG_CONVERT_HAP == 1 ]]; then
     # List of variants that passed QC
     QC_VARIANTS="../data/qc/variants_qc.txt"
 
-    # Basename for output haplotype files (transposed HAPS format)
+    # Basename for output haplotype file
     HAP_BASENAME=$TMP_DIR"/example_chr"$CHR
 
     # Convert BGEN haplotypes to transposed HAPS file
@@ -80,7 +80,7 @@ if [[ $FLAG_CONVERT_INP == 1 ]]; then
     echo "Processing chromosome "$CHR" ..."
     echo ""
 
-    # Basename for output haplotype files (transposed HAPS format)
+    # Basename for output haplotype file (transposed HAPS format)
     HAP_BASENAME=$TMP_DIR"/example_chr"$CHR
 
     # Convert haplotypes
@@ -110,7 +110,7 @@ if [[ $FLAG_CHECK_INP == 1 ]]; then
     echo "Processing chromosome "$CHR" ..."
     echo ""
 
-    # Basename for output haplotype files (transposed HAPS format)
+    # Basename for haplotype file (INP format)
     HAP_BASENAME=$TMP_DIR"/example_chr"$CHR
 
     # Basename for the input genotype files (PLINK format)
@@ -152,7 +152,7 @@ if [[ $FLAG_RUN_FASTPHASE == 1 ]]; then
 
     # fastPHASE parameters
     FP_K=20         # Number of haplotype motifs
-    FP_IT=10        # Number of EM iterations
+    FP_IT=25        # Number of EM iterations
     FP_SEED=123     # Random seed (this doesn't actually do anything because of bug in fastPhase)
 
     # Haplotypes in INP format

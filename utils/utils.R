@@ -28,21 +28,7 @@ read.inp <- function(basename, n.skip=0, n.load=Inf, progress=FALSE) {
                header=F, na.strings="?", showProgress=progress) %>%
         as_tibble() %>% filter(substr(V1,1,1)!="#")
     H <- matrix(unlist(strsplit(H$V1,'')) %>% as.integer(), p) %>% t()
-
-    ## # Read body of INP file (with fread)
-    ## ptm <- proc.time()
-    ## sub.file <- paste("awk 'NR > ", 2+skip.pos+3*n.skip, " && NR <= ",
-    ##                   2+skip.pos+3*(n.skip+n.load) ," { print }' ", sep="")
-    ## sub.file <- paste(sub.file, H.file, " | sed '/^#/ d'", sep="")
-    ## sub.file <- paste(sub.file, " | awk -F '' '{$1=$1}1'", sep="") 
-    ## H <- as_tibble(fread(sub.file, header=F, na.strings="?", showProgress=progress))
-    ## dim(H)
-    ## proc.time() - ptm
-
-    # Read body of INP file (with readr, slower on larger chromosomes)
-    #H <- read_fwf(H.file, fwf_widths(rep(1,p)), col_types=cols(.default="i"), comment="#", progress=progress,
-    #              skip=2+skip.pos+3*n.skip, n_max=2*n.load)
-    
+   
     # Read variant legend
     legend.file <- paste(basename, ".legend", sep="")
     if (file.exists(legend.file)) {
@@ -56,62 +42,12 @@ read.inp <- function(basename, n.skip=0, n.load=Inf, progress=FALSE) {
     sample.file <- paste(basename, ".sample", sep="")
     if (file.exists(sample.file)) {
         Subjects <- read_delim(sample.file, delim=" ", skip=2+n.skip, n_max=n.load, col_names=FALSE,
-                               col_types=cols(X4 = col_character(), .default = col_integer()))
+                               col_types=cols(.default = col_character()))
         colnames(Subjects) <- c("Pedigree","Family","Missing","Sex")
-        #H$Subject <- rep(Subjects$Pedigree, each=2)
-        #H <- dplyr::select(H, Subject, everything())
         rownames(H) <- rep(Subjects$Pedigree, each=2)
     }
     return(H)
 }
-
-## read.inp <- function(basename, n.skip=0, n.load=Inf, progress=FALSE) {
-##     # Read haplotype sequences from INP file
-##     H.file <- paste(basename, ".inp", sep="")
-##     # Read header of INP file    
-##     n <- as.numeric(read_lines(H.file, n_max=1, skip=0))
-##     p <- as.numeric(read_lines(H.file, n_max=1, skip=1))
-##     # Check whether file contains variant positions
-##     positions <- scan(H.file, what=character(), skip=2, nlines=1, sep=" ", quiet=TRUE)
-##     if(startsWith(positions[1], "P")) {
-##         positions <- scan(H.file, what=integer(), skip=2, nlines=1, sep=" ", na.strings=c("P"), quiet=TRUE)[-1]
-##         skip.pos <- 1
-##     }
-##     else {
-##         positions <- rep(NA, p)
-##         skip.pos <- 0
-##     }
-    
-##     # Read body of INP file
-##     if(n.load == Inf) {
-##         n.load <- n
-##     }
-##     sub.file <- paste("awk 'NR > ", 2+skip.pos+3*n.skip, " && NR <= ",
-##                       2+skip.pos+3*(n.skip+n.load) ," { print }' ", sep="")
-##     sub.file <- paste(sub.file, H.file, " | sed '/^#/ d'", sep="")
-##     sub.file <- paste(sub.file, " | awk -F '' '{$1=$1}1'", sep="") 
-##     H <- as_tibble(fread(sub.file, header=F, na.strings="?", showProgress=progress))
-    
-##     # Read variant legend
-##     legend.file <- paste(basename, ".legend", sep="")
-##     if (file.exists(legend.file)) {
-##         Legend <- read_delim(legend.file, delim=" ",
-##                              col_types=cols(position = col_integer(), .default = col_character()))
-##         colnames(Legend) <- c("Variant", "Position", "A1", "A2")
-##         stopifnot(all.equal(Legend$Position,positions))
-##         colnames(H) <- Legend$Variant
-##     }
-##     # Read subject IDs
-##     sample.file <- paste(basename, ".sample", sep="")
-##     if (file.exists(sample.file)) {
-##         Subjects <- read_delim(sample.file, delim=" ", skip=2+n.skip, n_max=n.load, col_names=FALSE,
-##                                col_types=cols(X4 = col_character(), .default = col_integer()))
-##         colnames(Subjects) <- c("Pedigree","Family","Missing","Sex")
-##         H$Subject <- rep(Subjects$Pedigree, each=2)
-##         H <- dplyr::select(H, Subject, everything())
-##     }
-##     return(H)
-## }
 
 read.haps <- function(basename, progress=FALSE) {
     # Read haplotype sequences from HAPS file

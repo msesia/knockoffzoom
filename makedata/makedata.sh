@@ -2,33 +2,35 @@
 #
 #
 
-#Rscript --vanilla makedata.R
+Rscript --vanilla makedata.R
 
 CHR_LIST=$(seq 21 22)
 
 ######################
 # Process haplotypes #
 ######################
-# INP_DIR="/scratch/groups/candes/ukbiobank_public/data/tmp"
-# OUT_DIR="/scratch/groups/candes/ukbiobank_public/data/haplotypes"
+INP_DIR="/scratch/groups/candes/ukbiobank_public/data/tmp"
+HMM_DIR="/scratch/groups/candes/ukbiobank_public/data/hmm"
+OUT_DIR="/scratch/groups/candes/ukbiobank_public/data/haplotypes"
 
-# mkdir -p $OUT_DIR
+mkdir -p $HMM_DIR
+mkdir -p $OUT_DIR
 
-# for CHR in $CHR_LIST; do
+for CHR in $CHR_LIST; do
 
-#   BASENAME=$INP_DIR"/example_chr"$CHR
-#   BASENAME_OUT=$OUT_DIR"/example_chr"$CHR
+  BASENAME=$INP_DIR"/example_chr"$CHR
+  BASENAME_OUT=$OUT_DIR"/example_chr"$CHR
 
-#   plink2 \
-#     --haps $BASENAME".haps" \
-#     --legend $BASENAME".leg" $CHR \
-#     --sample $BASENAME".sample" \
-#     --export bgen-1.3 \
-#     --out $BASENAME_OUT
+  plink2 \
+    --haps $BASENAME".haps" \
+    --legend $BASENAME".leg" $CHR \
+    --sample $BASENAME".sample" \
+    --export bgen-1.3 \
+    --out $BASENAME_OUT
 
-#   rm $BASENAME_OUT".log"
+  rm $BASENAME_OUT".log"
 
-# done
+done
 
 ###################
 # Quality control #
@@ -52,4 +54,5 @@ done
 cp -r "/scratch/groups/candes/ukbiobank_public/data/genotypes" "../data/"
 cp -r "/scratch/groups/candes/ukbiobank_public/data/haplotypes" "../data/"
 cp -r "/scratch/groups/candes/ukbiobank_public/data/qc" "../data/"
+cp -r "/scratch/groups/candes/ukbiobank_public/data/hmm" "../data/"
 
