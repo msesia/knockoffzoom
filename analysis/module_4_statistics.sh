@@ -23,14 +23,14 @@ mkdir -p $OUT_DIR
 CHR_LIST=($(seq 21 22))
 
 # List of resolutions
-RESOLUTION_LIST=("2")
+RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
 
 # Utility scripts
 BED_TO_FBM="Rscript --vanilla ../utils/make_FBM.R"
 COMPUTE_STATS="Rscript --vanilla ../utils/lasso.R"
 
 # Which operations should we perform?
-FLAG_MAKE_FBM=0
+FLAG_MAKE_FBM=1
 FLAG_COMPUTE_STATS=1
 
 ############
@@ -45,7 +45,7 @@ if [[ $FLAG_MAKE_FBM == 1 ]]; then
 
   for RESOLUTION in "${RESOLUTION_LIST[@]}"; do
     echo ""
-    echo "Processing genotypes at resolution "$RESOLUTION" ..."
+    echo "Processing at resolution "$RESOLUTION" ..."
     echo ""
 
     # Basename for output FBM
@@ -86,6 +86,10 @@ else
   echo "----------------------------------------------------------------------------------------------------"
 fi
 
+###########################
+# Compute test statistics #
+###########################
+
 if [[ $FLAG_COMPUTE_STATS == 1 ]]; then
   echo ""
   echo "----------------------------------------------------------------------------------------------------"
@@ -94,7 +98,7 @@ if [[ $FLAG_COMPUTE_STATS == 1 ]]; then
 
   for RESOLUTION in "${RESOLUTION_LIST[@]}"; do
     echo ""
-    echo "Processing genotypes at resolution "$RESOLUTION" ..."
+    echo "Processing at resolution "$RESOLUTION" ..."
     echo ""
 
     # Augmented genotypes in FBM format
@@ -109,11 +113,10 @@ if [[ $FLAG_COMPUTE_STATS == 1 ]]; then
     # Phenotype name
     PHENO_NAME="y"
 
-    # Output basename
+    # Output file
     OUT_BASENAME=$TMP_DIR"/example_res"$RESOLUTION
 
     # Compute test statistics
-    echo $COMPUTE_STATS $FBM_FILE $KEY_BASENAME $PHENO_FILE $PHENO_NAME $OUT_BASENAME
     $COMPUTE_STATS $FBM_FILE $KEY_BASENAME $PHENO_FILE $PHENO_NAME $OUT_BASENAME
 
   done

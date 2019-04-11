@@ -16,15 +16,15 @@ mkdir -p $TMP_DIR
 CHR_LIST=$(seq 21 22)
 
 # List of resolutions
-RESOLUTION_LIST=("2" "10")
+RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
 
 # Utility scripts
 CLUSTER_VARIANTS="Rscript --vanilla ../utils/cluster.R"
 PARTITION_VARIANTS="Rscript --vanilla ../utils/partition.R"
 
 # Which operations should we perform?
-FLAG_COMPUTE_LD=1
-FLAG_CLUSTER=1
+FLAG_COMPUTE_LD=0
+FLAG_CLUSTER=0
 FLAG_PARTITION=1
 
 #####################

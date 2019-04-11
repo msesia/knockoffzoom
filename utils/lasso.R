@@ -127,7 +127,6 @@ if(phenotype.class=="binary") {
     lasso.fit <- big_spLinReg(G, y.train=y, ind.train=ind.train, covar.train=covar.train,
                               dfmax=dfmax, ncores=ncores)
 }
-
 cat("done.\n")
 
 # Extract beta from each fold and combine them
@@ -152,7 +151,8 @@ Beta <- Beta %>%
 Lasso.res <- Beta %>%
     inner_join(Variants, by = c("CHR", "SNP", "BP")) %>%
     filter(Z!=0) %>%
-    arrange(desc(Z))
+    arrange(desc(Z)) %>%
+    select(CHR, SNP, BP, Z, Group, Knockoff)
 cat("done.\n")
 
 ##################################
@@ -184,7 +184,7 @@ Stats <- Lasso.res %>%
 cat("done.\n")
 
 # Give preview
-Stats %>% head() %>% print()
+Stats %>% print(n=20)
 
 # Save results
 stats.file <- sprintf("%s_stats.txt", out.basename)

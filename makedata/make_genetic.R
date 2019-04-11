@@ -7,7 +7,7 @@ library(snpStats)
 scratch <- "/scratch/groups/candes/ukbiobank_public/data"
 
 chr.list <- seq(21,22)
-p.keep <- 1000
+p.keep <- 2000
 
 ###################
 ## Download data ##
@@ -55,12 +55,17 @@ dictionary[rowMeans(dictionary)>0.5,] = 1-dictionary[rowMeans(dictionary)>0.5,]
 # Compute MAF
 variants$MAF <- rowMeans(dictionary)
     
-# Remove positions at which there is no variation
-variants.clean <- variants %>% filter(MAF>=0.05) %>%
-    group_by(CHR) %>% top_n(round(p.keep/length(chr.list)), wt=BP) %>%
-    ungroup()
-pass.MAF <- which(variants$SNP %in% variants.clean$SNP)    
-dictionary.clean <- dictionary[pass.MAF,]
+# Keep only as subset of common variants
+variants.clean <- lapply(chr.list, function(chr) {
+    variants.clean.chr <- variants %>%
+        filter(CHR==chr, MAF>=0.2, BP>14e6) %>%
+        arrange(BP) %>%
+        head(n=round(p.keep/length(chr.list)))
+    return(variants.clean.chr)
+})
+variants.clean <- do.call("rbind", variants.clean)
+keep.idx <- which(variants$SNP %in% variants.clean$SNP)    
+dictionary.clean <- dictionary[keep.idx,]
 
 #############
 ## Fit HMM ##

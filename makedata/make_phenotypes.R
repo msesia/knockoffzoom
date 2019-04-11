@@ -6,7 +6,7 @@ library(snpStats)
 
 out.dir <- "../data"
 
-amplitude <- 10
+amplitude <- 8
 chr.list <- seq(21,22)
 set.seed(2019)
 
@@ -50,7 +50,8 @@ choose_causal <- function(n.loci, n.signals) {
         cat(sprintf("Assembling %d clumps of size %d for chromosome %d...\n",
                     n.loci.chr[chr.idx], locus.size, chr))
         Variants.chr <- Variants %>% filter(CHR==chr)
-        causal.idx <- round(seq(100,round(0.95*nrow(Variants.chr)), length.out=n.loci.chr[chr.idx]))
+        causal.idx <- round(seq(round(0.02*nrow(Variants.chr)),
+                                round(0.98*nrow(Variants.chr)), length.out=n.loci.chr[chr.idx]))
         bp.first <- Variants.chr$BP[causal.idx]
         bp.next <- as.numeric(sapply(causal.dist[-1], function(dkb) {bp.first + 1000 * dkb}))
         bp.next <- matrix(bp.next, ncol=length(causal.dist)-1)
@@ -115,7 +116,7 @@ Z <- 2-Subjects$sex
 
 # Compute phenotype mean vector
 cat(sprintf("Generating phenotypes... "))
-beta <- Variants.causal$Sign * Variants.causal$Scale / sqrt(nrow(G))
+beta <- amplitude * Variants.causal$Sign * Variants.causal$Scale / sqrt(nrow(G))
 y.mean <- 10*scale(Z)/sqrt(nrow(G)) + scale(G) %*% beta
 y <- as.numeric(y.mean + rnorm(nrow(G)))
 cat("done.\n")

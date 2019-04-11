@@ -20,7 +20,7 @@ mkdir -p $OUT_DIR
 CHR_LIST=$(seq 21 22)
 
 # List of resolutions
-RESOLUTION_LIST=("2" "10")
+RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
 
 # Utility scripts
 GENERATE_KNOCKOFFS="Rscript --vanilla ../utils/knockoffs.R"
@@ -29,7 +29,7 @@ TEST_GOF="Rscript --vanilla ../utils/test_gof.R"
 
 # Which operations should we perform?
 FLAG_GENERATE_KNOCKOFFS=1
-FLAG_KNOCKOFF_GOF=1
+FLAG_KNOCKOFF_GOF=0
 
 ######################
 # Generate knockoffs #
@@ -135,7 +135,7 @@ if [[ $FLAG_KNOCKOFF_GOF == 1 ]]; then
     GROUPS_FILE=$TMP_DIR"/example_chr"$CHR"_groups"$RESOLUTION".txt"
 
     # Basename for output files
-    OUT_BASENAME=$OUT_DIR"/example_chr"$CHR"_groups"$RESOLUTION
+    OUT_BASENAME=$OUT_DIR"/example_chr"$CHR"_res"$RESOLUTION
 
     # Plot goodness-of-fit of knockoffs
     $KNOCKOFF_GOF $STATS_BASENAME $KEY_FILE $GROUPS_FILE $OUT_BASENAME
