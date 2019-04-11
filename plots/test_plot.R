@@ -5,7 +5,7 @@ suppressMessages(library(gridExtra))
 source("utils_shiny.R")
 source("utils_clumping.R")
 source("utils_manhattan.R")
-source("utils_annotations.R")
+source("utils_plotting.R")
 
 data_dir = "../results"
 chromosomes = 1:22
@@ -59,15 +59,16 @@ load_association_results = function(data_dir, phenotype){
 association_results <- load_association_results(data_dir, phenotype)
 
 #Make annotation plot
-source("utils_annotations.R")
+source("utils_plotting.R")
 window.chr = 22
 window.center = mean(filter(association_results$LMM, CHR==window.chr)$BP/1e6)
 window.width = 1
 window.left <- 1e6*max(0, window.center - window.width)
 window.right <- 1e6*min(window.center + window.width,
                     1e-6*max(filter(association_results$LMM, CHR==window.chr)$BP))
-plot_sears_tower(window.chr, window.left, window.right,
-                 association_results$Discoveries,
-                 association_results$LMM, association_results$LMM.clumped,
-                 annotations$Annotations.func, annotations$Exons.canonical,
-                 highlight.gene="KIF1B", max.gene.rows=3)
+plot_combined(window.chr, window.left, window.right,
+              association_results$Discoveries,
+              association_results$LMM, association_results$LMM.clumped,
+              Annotations.func=annotations$Annotations.func,
+              Exons.canonical=annotations$Exons.canonical,
+              highlight.gene="KIF1B", max.gene.rows=3)

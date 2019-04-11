@@ -67,82 +67,44 @@ place_segments <- function(Segments, gap=5e4, verbose=FALSE) {
   return(Segments)
 }
 
-plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries, LMM, LMM.clumped,
-                             Annotations.func, Exons.canonical, highlight.gene=NULL, max.gene.rows=4) {
-    # Significance threshold
-    p.significant <- 5e-8
+# Minimal theme
+theme_minimal <- theme_bw() +
+    theme(axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(), axis.title.y=element_blank(),
+          panel.border=element_blank(),
+          panel.grid.major.x = element_line(size = 0.2, colour = "darkgray"),
+          panel.grid.minor.x = element_line(size = 0.1, colour = "darkgray")
+          )
 
-    # Extract color map
-    annotation.color.map <- Annotations.func %>% group_by(name, itemColor) %>% summarise() %>%
-        ungroup() %>%
-        mutate(name.num=parse_number(as.character(name))) %>%
-        mutate(label=gsub("\\d+_", "",name), label=gsub(fixed("_"), " ",label)) %>%
-        mutate(label=as.factor(label)) %>%
-        arrange(name.num)
-
-    # Convert names to factors according to color maps
-    Annotations.func <- Annotations.func %>%
-        mutate(label=gsub("\\d+_", "",name), label=gsub(fixed("_"), " ",label)) %>%
-        mutate(label=factor(label, levels=annotation.color.map$label, labels=annotation.color.map$label))
-
-    # Extract knockoff discoveries within this window
-    Knockoffs.window <- Discoveries %>% filter(Method=="Knockoffs") %>%
-        filter(CHR==window.chr, BP.min<=window.right, BP.max>=window.left)
-    cat(sprintf("There are %d knockoff discoveries within this window.\n", nrow(Knockoffs.window)))
-
-    # # Update window limits
-    # if(nrow(Knockoffs.window)>0) {
-    #   window.left <- min(window.left, min(Knockoffs.window$BP.min))
-    #   window.right <- max(window.right, max(Knockoffs.window$BP.max))
-    # }
+plot_pvalues <- function(window.chr, window.left, window.right, LMM, LMM.clumped,
+                         p.significant=5e-8, p.max=1e-0) {
 
     # Extract LMM pvalues within this window
     LMM.clumped.window <- LMM.clumped %>% filter(CHR==window.chr, BP<=window.right, BP>=window.left)
     LMM.window <- LMM %>% filter(CHR==window.chr, BP<=window.right, BP>=window.left) %>%
         left_join(LMM.clumped.window, by = c("SNP", "CHR", "BP")) %>%
         mutate(BP.lead=factor(BP.lead))
-    
+       
     cat(sprintf("There are %d LMM pvalues within this window, %d of which are significant.\n",
                 nrow(LMM.window), sum(LMM.window$P<p.significant)))
 
-    # Select exons within this windows
-    Exons.window <- Exons.canonical %>%
-        filter(chrom==window.chr, txStart<=window.right, txEnd>=window.left)
-    cat(sprintf("There are %d exons within this window, divided into %d genes.\n",
-                nrow(Exons.window), length(unique(Exons.window$name2))))
-
-    # Select functional annotations within this window
-    Functional.window <- Annotations.func %>%
-        filter(chrom==window.chr, chromStart<=window.right, chromEnd>=window.left)
-    cat(sprintf("There are %d functional annotations within this window.\n",
-                nrow(Functional.window)))
-    
     # Significance level for pvalues
     Window.nominal <- LMM.window %>% mutate(Importance = -log10(p.significant))
 
-    # Minimal theme
-    theme_minimal <- theme_bw() +
-        theme(axis.line=element_blank(),axis.text.x=element_blank(),
-              axis.text.y=element_blank(),axis.ticks=element_blank(),
-              axis.title.x=element_blank(), axis.title.y=element_blank(),
-              panel.border=element_blank(),
-              panel.grid.major.x = element_line(size = 0.2, colour = "darkgray"),
-              panel.grid.minor.x = element_line(size = 0.1, colour = "darkgray")
-             )
-
-    # Manhattan plot
+        # Manhattan plot
     LMM.window$BP.lead <- round((LMM.window$BP.lead %>% as.character %>% parse_number)/1e6,3) %>% factor
     clump.lead.snps <- unique(LMM.clumped.window$SNP.lead)
 
     if(all(is.na(LMM.window$BP.lead))) {
         p.manhattan <- LMM.window %>%
-            #filter(P<1e-2) %>%
+            filter(P<p.max) %>%
             mutate(P=pmax(1e-300,P)) %>%
             ggplot(aes(x=BP, y=-log10(P))) +
             geom_point(color="black", alpha=0.25)
     } else {
         p.manhattan <- LMM.window %>%
-            #filter(P<1e-2) %>%
+            filter(P<p.max) %>%
             mutate(SNP.lead=factor(SNP.lead, levels=clump.lead.snps, labels=clump.lead.snps)) %>%
             mutate(P=pmax(1e-300,P)) %>%
             ggplot(aes(x=BP, y=-log10(P), color=SNP.lead, alpha=is.na(SNP.lead))) +
@@ -152,9 +114,15 @@ plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries,
     if(min(LMM.window$P)<1e-100) {
         manhattan.y.max <- 300
         manhattan.y.breaks <- c(0,7.3,100,300)
-    } else {
+    } else if(min(LMM.window$P)<1e-50) {
         manhattan.y.max <- 100
         manhattan.y.breaks <- c(0,7.3,50,100)
+    } else if(min(LMM.window$P)<1e-20) {
+        manhattan.y.max <- 50
+        manhattan.y.breaks <- c(0,7.3,20,50)
+    } else {
+        manhattan.y.max <- 20
+        manhattan.y.breaks <- c(0,7.3,10,20)
     }
 
     p.manhattan <- p.manhattan +
@@ -211,6 +179,19 @@ plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries,
       p.clumped <- ggplot(tibble()) + geom_blank()
     }
 
+    # Return plot objects
+    plots <- c()
+    plots$manhattan <- p.manhattan
+    plots$clumped <- p.clumped
+    return(plots)
+}
+
+plot_chicago <- function(window.chr, window.left, window.right, Discoveries) {
+    # Extract knockoff discoveries within this window
+    Knockoffs.window <- Discoveries %>% filter(Method=="Knockoffs") %>%
+        filter(CHR==window.chr, BP.min<=window.right, BP.max>=window.left)
+    cat(sprintf("There are %d knockoff discoveries within this window.\n", nrow(Knockoffs.window)))
+
     # Plot knockoff discoveries
     resolution.list <- c("2","5","10","20","50","100") %>% rev
     resolution.labels <- resolution.list
@@ -222,10 +203,12 @@ plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries,
           mutate(Resolution=as.character(Resolution)) %>%
           mutate(Height=resolution.heights[Resolution]) %>%
           ggplot() +
-          geom_rect(aes(xmin=pmax(BP.min,window.left), xmax=pmin(BP.max,window.right), ymin=Height-0.5, ymax=Height+0.5),
+          geom_rect(aes(xmin=pmax(BP.min,window.left), xmax=pmin(BP.max,window.right),
+                        ymin=Height-0.5, ymax=Height+0.5),
                     alpha=0.5, fill="black", color="black") +
           ylab("Resolution (%)") + xlab("") +
-          scale_x_continuous(expand=c(0.01,0.01), limits=c(window.left,window.right), labels=function(x) {x*1e-6}) +
+          scale_x_continuous(expand=c(0.01,0.01), limits=c(window.left,window.right),
+                             labels=function(x) {x*1e-6}) +
           scale_y_continuous(limits=c(0.5,max(resolution.heights)+0.5),
                              labels=resolution.labels, breaks=resolution.heights) +
           ggtitle("Chicago plot (KnockoffZoom)") +
@@ -242,11 +225,35 @@ plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries,
     } else {
       p.knockoffs <- ggplot(tibble()) + geom_blank()
     }
-    
+
+    return(p.knockoffs)
+}
+
+plot_annotations <- function(window.chr, window.left, window.right, Annotations.func) {
+    # Extract color map
+    annotation.color.map <- Annotations.func %>% group_by(name, itemColor) %>% summarise() %>%
+        ungroup() %>%
+        mutate(name.num=parse_number(as.character(name))) %>%
+        mutate(label=gsub("\\d+_", "",name), label=gsub(fixed("_"), " ",label)) %>%
+        mutate(label=as.factor(label)) %>%
+        arrange(name.num)
+
+    # Convert names to factors according to color maps
+    Annotations.func <- Annotations.func %>%
+        mutate(label=gsub("\\d+_", "",name), label=gsub(fixed("_"), " ",label)) %>%
+        mutate(label=factor(label, levels=annotation.color.map$label, labels=annotation.color.map$label))
+
     # Plot functional annotations
     myColors <- annotation.color.map$itemColor
     names(myColors) <- annotation.color.map$label
 
+    # Select functional annotations within this window
+    Functional.window <- Annotations.func %>%
+        filter(chrom==window.chr, chromStart<=window.right, chromEnd>=window.left)
+    cat(sprintf("There are %d functional annotations within this window.\n",
+                nrow(Functional.window)))
+
+    # Make plot
     p.functional <- Functional.window %>%
         mutate(chromStart=pmax(chromStart, window.left), chromEnd=pmin(chromEnd, window.right)) %>%
         ggplot() +
@@ -261,6 +268,20 @@ plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries,
         theme(legend.key.size = unit(0.5,"line"),
               text = element_text(size=font.size),
               legend.text = element_text(size=font.size))
+
+    # Return plot
+    return(p.functional)
+}
+
+plot_genes <- function(window.chr, window.left, window.right, Exons.canonical,
+                       highlight.gene=NULL, max.gene.rows=4) {
+
+    # Select exons within this windows
+    Exons.window <- Exons.canonical %>%
+        filter(chrom==window.chr, txStart<=window.right, txEnd>=window.left)
+    cat(sprintf("There are %d exons within this window, divided into %d genes.\n",
+                nrow(Exons.window), length(unique(Exons.window$name2))))
+        
 
     # Find out how many genes there are and determine whether we would plot all of them
     Genes.window <- Exons.window %>% group_by(name, name2, strand) %>%
@@ -336,10 +357,38 @@ plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries,
               panel.grid.major.x = element_line(size = 0.2, colour = "darkgray"),
               panel.grid.minor.x = element_line(size = 0.1, colour = "darkgray")
               )
-    p.genes
 
     if(!plot.all.genes) {
       p.genes <- p.genes + ggtitle("Genes (not all genes are shown)")
+    }
+
+    # Return plot
+    return(p.genes)
+}
+
+plot_combined <- function(window.chr, window.left, window.right, Discoveries, LMM, LMM.clumped,
+                             Annotations.func=NULL, Exons.canonical=NULL,
+                             highlight.gene=NULL, max.gene.rows=4) {
+
+    # Make Chicago plot with KnockoffZoom discoveries
+    p.knockoffs <- plot_chicago(window.chr, window.left, window.right, Discoveries)
+        
+    # Make plots with LMM p-values
+    p.lmm <- plot_pvalues(window.chr, window.left, window.right, LMM, LMM.clumped)
+
+    # Plot functional annotations
+    if(!is.null(Annotations.func)) {
+        p.functional <- plot_annotations(window.chr, window.left, window.right, Annotations.func)
+    } else {
+        p.functional <- ggplot(tibble()) + geom_blank()
+    }
+
+    # Plot genes
+    if(!is.null(Exons.canonical)) {
+        p.genes <- plot_genes(window.chr, window.left, window.right, Exons.canonical,
+                              highlight.gene=highlight.gene, max.gene.rows=max.gene.rows)
+    } else {
+        p.genes <- ggplot(tibble()) + geom_blank()
     }
 
     # Determine relative heights of each subplot
@@ -347,12 +396,13 @@ plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries,
     height.clumps <- 0.3
     height.knockoffs <- 1.25
     height.functional <- 0.3
-    height.genes <- 0.75*length(unique(Genes.window$Height))
+    height.genes <- 0.75*max.gene.rows
     heights <- c(height.manhattan, height.clumps, height.knockoffs, height.functional, height.genes)
 
+    # Convert the plot objects for placement
     debug.lines <- FALSE
-    g1 <-  ggplotGrob(p.manhattan)
-    g2 <-  ggplotGrob(p.clumped + theme(legend.position="none"))
+    g1 <-  ggplotGrob(p.lmm$manhattan)
+    g2 <-  ggplotGrob(p.lmm$clumped + theme(legend.position="none"))
     g3 <-  ggplotGrob(p.knockoffs)
     g4 <-  ggplotGrob(p.functional + theme(legend.position="none"))
     g5 <-  ggplotGrob(p.genes)
@@ -362,20 +412,21 @@ plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries,
     fg4 <- gtable_frame(g4, width = unit(1, "null"), height = unit(heights[4], "null"), debug = debug.lines)
     fg5 <- gtable_frame(g5, width = unit(1, "null"), height = unit(heights[5], "null"), debug = debug.lines)
 
+    # Combine the main plots
     fg.l <- gtable_frame(gtable_rbind(fg1, fg2, fg3, fg4, fg5),
-                         width = unit(4, "null"),
-                         height = unit(1, "null"))
+                         width = unit(4, "null"), height = unit(1, "null"))
 
-    # Extract legends
+    # Extract the legends
     g6 <- ggplotGrob(ggplot())
-    try(g6 <- ggplotGrob(ggplotify::as.ggplot(get_legend(p.clumped))+
+    try(g6 <- ggplotGrob(ggplotify::as.ggplot(get_legend(p.lmm$clumped))+
                          theme(text = element_text(size=font.size))
                          ), silent=TRUE)
     g7 <- ggplotGrob(ggplot())
     try(g7 <- ggplotGrob(ggplotify::as.ggplot(get_legend(p.functional))+
                          theme(text = element_text(size=font.size))
                          ), silent=TRUE)
-    
+
+    # Combine the legends
     g0 <- ggplotGrob(ggplot())
     fg00 <- gtable_frame(g0, width = unit(1, "null"),
                         height = unit(0.1, "null"), debug = debug.lines)
@@ -387,16 +438,17 @@ plot_sears_tower <- function(window.chr, window.left, window.right, Discoveries,
                         height = unit(1, "null"), debug = debug.lines)
     fg02 <- gtable_frame(g0, width = unit(1, "null"),
                         height = unit(1, "null"), debug = debug.lines)
-
     fg.r <- gtable_frame(gtable_rbind(fg00,fg6,fg01,fg7,fg02),
                          width = unit(1, "null"),
                          height = unit(1, "null"))
-   
+
+    # Combine main plots and legends
     grid.newpage()
     combined <- gtable_frame(gtable_cbind(fg.l, fg.r),
                          width = unit(1, "null"),
                          height = unit(1, "null"))
     p.final <- ggplotify::as.ggplot(combined)
-    
+
+    # Return complete plot
     return(p.final)
 }
