@@ -46,7 +46,7 @@ Variants <- do.call("rbind", Variants) %>% arrange(CHR,BP)
 # Cross reference stats and list of variants
 Stats <- Stats %>% left_join(Variants, by = c("CHR", "Group")) %>%
     group_by(CHR, Group, SNP.lead, BP.lead, Size, W) %>%
-    summarise(BP.min=min(BP), BP.max=max(BP)) %>%
+    summarise(BP.min=min(BP), BP.max=max(BP), BP.width=BP.max-BP.min) %>%
     ungroup() %>%
     arrange(desc(abs(W)))
 
