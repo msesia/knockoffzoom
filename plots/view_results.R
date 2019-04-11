@@ -4,23 +4,23 @@ suppressMessages(library(tikzDevice))
 suppressMessages(library(shiny))
 suppressMessages(library(dqshiny))
 source("utils_clumping.R")
-source("utils_annotations.R")
+source("utils_plotting.R")
 source("utils_shiny.R")
 source("utils_manhattan.R")
 
-data_dir = "../data"
-chromosomes = 1:22
-phenotypes = c("bmi", "cvd", "diabetes", "glaucoma", "height", "hypothyroidism", 
-               "platelet", "respiratory", "sbp")
+data.dir <- "../results"
+annotations.dir <- "../data"
+chromosomes <- 1:22
+phenotypes <- c("example")
 
-annotations = load_annotations(data_dir)
-genes = unique(annotations$Exons.canonical$name2)
+annotations <- load_annotations(annotations.dir)
+genes <- unique(annotations$Exons.canonical$name2)
 
 # create user interface
 ui <- fluidPage(
 
   # title
-  headerPanel('KnockoffZoom for the UK Biobank'),
+  headerPanel('KnockoffZoom'),
   
   # side panel with inputs, error messages, and information box
   fluidRow(
@@ -54,13 +54,11 @@ ui <- fluidPage(
         )
       ),
       span(textOutput("message"), style="color:red"),
-      absolutePanel(
-        bottom = 0, left = 0, width = "24%",
-        fixed = TRUE,
+      absolutePanel(bottom = 0, left = 0, width = "24%", fixed = TRUE,
         div(
           style="padding: 8px; border: 5px solid #CCC; background: #FFFFFF;", 
           HTML("<font size=\"3\">This website presents the results of the KnockoffZoom methodology
-            applied to the UK Biobank data. See [bioRxiv link] for the manuscript, and <a href=\"http://web.stanford.edu/group/candes/knockoffs\" target=\"_blank\"/>this webpage</a> 
+            applied to a toy dataset. See [bioRxiv link] for the manuscript, and <a href=\"http://web.stanford.edu/group/candes/knockoffs\" target=\"_blank\"/>this webpage</a> 
             for more information.</font>")
         )
       )
@@ -82,14 +80,39 @@ ui <- fluidPage(
 )
 )
 
+find_chr_boundaries <- function(association_results, chr) {
+    # Initialize boundaries
+    min.BP <- NULL
+    max.BP <- NULL
+    
+    # Look at the range of LMM p-values
+    if(nrow(association_results$LMM)>0) {
+        if(nrow(filter(association_results$LMM, CHR==chr))>0) {
+            min.BP <- min(filter(association_results$LMM, CHR==chr)$BP)
+            max.BP <- max(filter(association_results$LMM, CHR==chr)$BP)
+        } else {
+            min.BP <- 0
+            max.BP <- 0
+        }
+    } else {
+        min.BP <- 0
+        max.BP <- 0
+    }
+
+    # Return boundaries
+    boundaries <- c()
+    boundaries$min.BP <- min.BP
+    boundaries$max.BP <- max.BP
+    return(boundaries)
+}
 
 # back-end code
 server <- function(input, output, session) {
 
-  output$placeholder.manhattan = renderText({"[Select a phenotype to get started.]"})
-  output$placeholder.locus = renderText({"[Select a chromosome or gene to produce locus view.]"})
+  output$placeholder.manhattan <- renderText({"[Select a phenotype to get started.]"})
+  output$placeholder.locus <- renderText({"[Select a chromosome or gene to produce locus view.]"})
   # all parameters required to describe state of the app  
-  state = reactiveValues(phenotype = NULL,
+  state <- reactiveValues(phenotype = NULL,
                          association_results = NULL,
                          chr = NULL,
                          max.BP = NULL,
@@ -102,91 +125,100 @@ server <- function(input, output, session) {
   # what to do if "Load association results" button is pressed
   observeEvent(input$load.results, {
     # clear error message
-    output$message = NULL
+    output$message <- NULL
     # switch to the appropriate tab
     updateTabsetPanel(session, inputId = "Tabset", selected = "manhattan")
     # clear placeholder
-    output$placeholder.manhattan = NULL
+    output$placeholder.manhattan <- NULL
     # check if phenotype has changed; if so, clear lower-level variables and 
     # load association results for new phenotype
     if(!is.null(state$phenotype)){
       if(input$phenotype != state$phenotype){
-        state$chr = NULL
-        state$highlight.gene = NULL
-        state$max.BP = NULL
-        state$window.left = NULL
-        state$window.right = NULL
-        state$slider.left = NULL
-        state$slider.right = NULL
-        output$plot.annotations = NULL # important: clear Chicago plot
-        output$placeholder.locus = renderText({"[Select a chromosome or gene to produce locus view.]"})
-        state$phenotype = input$phenotype 
-        state$association_results = load_association_results(data_dir, input$phenotype)
+        state$chr <- NULL
+        state$highlight.gene <- NULL
+        state$min.BP <- NULL
+        state$max.BP <- NULL
+        state$window.left <- NULL
+        state$window.right <- NULL
+        state$slider.left <- NULL
+        state$slider.right <- NULL
+        output$plot.annotations <- NULL # important: clear Chicago plot
+        output$placeholder.locus <- renderText({"[Select a chromosome or gene to produce locus view.]"})
+        state$phenotype <- input$phenotype 
+        state$association_results <- load_association_results(data.dir, input$phenotype)
       }
     } else{
-        state$phenotype = input$phenotype
+        state$phenotype <- input$phenotype
         withProgress(message = 'Loading results...', value = 0, {
-          state$association_results = load_association_results(data_dir, input$phenotype)
+          state$association_results <- load_association_results(data.dir, input$phenotype)
         })
     }
     # produce plot
     output$plot.manhattan <- renderPlot({
       withProgress(message = 'Rendering plot...', value = 0, {
-        plot_manhattan_knockoffs(state$association_results$LMM,
-                                 state$association_results$Stats,
-                                 ytrans="identity")
+          if(is.null(state$association_results$Stats)) {
+              showNotification("Missing KnockoffZoom results.")
+          }
+          if(is.null(state$association_results$LMM)) {
+              showNotification("Missing LMM results.")
+          }
+          plot_manhattan_knockoffs(state$association_results$LMM,
+                                   state$association_results$Stats,
+                                   ytrans="identity")
       })
     })
   })
 
   # what to do if "Zoom to chromosome" button is pressed
   observeEvent(input$zoom.chr,{
-      error = TRUE
+      error <- TRUE
       # check if association data are loaded
       if(is.null(state$phenotype) | is.null(state$association_results)){
-        output$message = renderText({"Before clicking this button, first select a 
+        output$message <- renderText({"Before clicking this button, first select a 
           phenotype and load association results."})
       } else{
         # check if valid chromosome number was entered
-        chr = as.integer(input$chr)
+        chr <- as.integer(input$chr)
         if(is.na(chr) | is.null(chr)){
-          error = TRUE
+          error <- TRUE
         } else{
           if(!(chr %in% 1:22)){
-            error = TRUE
+            error <- TRUE
           } else{
-            error = FALSE
+            error <- FALSE
           }
         } 
         if(error){
-          output$message = renderText({"Type a chromosome number between 1 and 22."})
+          output$message <- renderText({"Type a chromosome number between 1 and 22."})
         } else{
           # clear error message
-          output$message = NULL
+          output$message <- NULL
           # clear placeholder
-          output$placeholder.locus = NULL
+          output$placeholder.locus <- NULL
           # clear highlighted gene if chromosome has changed
           if(!is.null(state$chr)){
             if(state$chr != chr){
-              state$chr = chr
-              state$highlight.gene = NULL
+              state$chr <- chr
+              state$highlight.gene <- NULL
             }
           } else{
-            state$chr = chr
-            state$highlight.gene = NULL
+            state$chr <- chr
+            state$highlight.gene <- NULL
           }
           # set window parameters to show whole chromosome
-          state$max.BP = max(filter(state$association_results$LMM, CHR==state$chr)$BP)
-          state$chr = chr
-          state$window.left = 0
-          state$window.right = state$max.BP
-          state$slider.left = state$window.left
-          state$slider.right = state$window.right
-          updateTabsetPanel(session, inputId = "Tabset", selected = "manhattan.chr")
-          output$plot.annotations = renderPlot({
+          chr.boundaries <- find_chr_boundaries(state$association_results, state$chr)
+          state$min.BP <- chr.boundaries$min.BP
+          state$max.BP <- chr.boundaries$max.BP
+          state$chr <- chr
+          state$window.left <- state$min.BP
+          state$window.right <- state$max.BP
+          state$slider.left <- state$window.left
+          state$slider.right <- state$window.right
+          updateTabsetPanel(session, inputId = "Tabset", selected = "manhattan.chr")          
+          output$plot.annotations <- renderPlot({
             withProgress(message = 'Rendering plot...', value = 0, {
-              plot_sears_tower_state(state, annotations)})
-            })
+                plot_combined_state(state, annotations)})
+          })
         }
       }
   }
@@ -196,43 +228,45 @@ server <- function(input, output, session) {
   observeEvent(input$zoom.gene,{
     # check if association data are loaded
     if(is.null(state$phenotype) | is.null(state$association_results)){
-      output$message = renderText({"Before clicking this button, first select a phenotype and
+      output$message <- renderText({"Before clicking this button, first select a phenotype and
         load association results."})
     } else{
        if(input$gene %in% genes){ # check if valid gene name was entered
          withProgress(message = 'Finding location of gene...', value = 0, {
            # clear placeholder
-           output$placeholder.locus = NULL
+           output$placeholder.locus <- NULL
            # clear error message
-           output$message = NULL
+           output$message <- NULL
            # set chromosome appropriately
-           filtered_exons = filter(annotations$Exons.canonical, name2==input$gene)
-           state$chr = filtered_exons$chrom[1]
-           state$max.BP = max(filter(state$association_results$LMM, CHR==state$chr)$BP)
+           filtered_exons <- filter(annotations$Exons.canonical, name2==input$gene)
+           state$chr <- filtered_exons$chrom[1]
+           chr.boundaries <- find_chr_boundaries(state$association_results, state$chr)
+           state$min.BP <- chr.boundaries$min.BP
+           state$max.BP <- chr.boundaries$max.BP
            # set center of gene to be center of window
-           gene_min = min(filtered_exons$txStart)
-           gene_max = max(filtered_exons$txEnd)
-           window.center = (gene_min + gene_max)/2
+           gene_min <- min(filtered_exons$txStart)
+           gene_max <- max(filtered_exons$txEnd)
+           window.center <- (gene_min + gene_max)/2
            # choose a window of width 1Mb
-           state$window.left = max(0, window.center - 0.25e6)
-           state$window.right = min(window.center + 0.25e6, state$max.BP)
+           state$window.left <- max(state$min.BP, window.center - 0.25e6)
+           state$window.right <- min(window.center + 0.25e6, state$max.BP)
            # adjust window in order to avoid cutting in the middle of knockoff blocks
-           state = adjust_window(state)
+           state <- adjust_window(state)
            # adjust slider appropriately
-           state$slider.left = state$window.left
-           state$slider.right = state$window.right
+           state$slider.left <- state$window.left
+           state$slider.right <- state$window.right
            # set highlighted gene
-           state$highlight.gene = input$gene
+           state$highlight.gene <- input$gene
            # switch to the appropriate tab
            updateTabsetPanel(session, inputId = "Tabset", selected = "manhattan.chr")
          })
          # produce Chicago plot
-         output$plot.annotations = renderPlot({
+         output$plot.annotations <- renderPlot({
            withProgress(message = 'Rendering plot...', value = 0, {
-             plot_sears_tower_state(state, annotations)})
+             plot_combined_state(state, annotations)})
          })
        } else{
-         output$message = renderText({"Type a valid gene name."})
+         output$message <- renderText({"Type a valid gene name."})
        }
     }
   })
@@ -241,26 +275,26 @@ server <- function(input, output, session) {
   observeEvent(input$zoom.in,{
     # check if association results are loaded
     if(is.null(state$phenotype) | is.null(state$association_results)){
-      output$message = renderText({"Before clicking this button, load association results for
+      output$message <- renderText({"Before clicking this button, load association results for
         a phenotype and then choose a chromosome or gene."})
     } else{
       # check if window is chosen
       if(is.null(state$window.left) | is.null(state$window.right)){
-        output$message = renderText({"Before clicking this button, choose a chromosome or gene."})
+        output$message <- renderText({"Before clicking this button, choose a chromosome or gene."})
       } else{
         # switch to appropriate tab
         updateTabsetPanel(session, inputId = "Tabset", selected = "manhattan.chr")
-        output$message = NULL
+        output$message <- NULL
         # reset window based on slider
-        state$window.left = input$window[1]*1e6
-        state$window.right = input$window[2]*1e6
-        state = adjust_window(state)
-        state$slider.left = state$window.left
-        state$slider.right = state$window.right
+        state$window.left <- input$window[1]*1e6
+        state$window.right <- input$window[2]*1e6
+        state <- adjust_window(state)
+        state$slider.left <- state$window.left
+        state$slider.right <- state$window.right
         # produce plot
-        output$plot.annotations = renderPlot({
+        output$plot.annotations <- renderPlot({
           withProgress(message = 'Rendering plot...', value = 0, {
-            plot_sears_tower_state(state, annotations)})
+            plot_combined_state(state, annotations)})
         })
       }
     }
@@ -270,30 +304,30 @@ server <- function(input, output, session) {
   observeEvent(input$zoom.out, {
     # check if association results are loaded
     if(is.null(state$phenotype) | is.null(state$association_results)){
-      output$message = renderText({"Before clicking this button, load association results for
+      output$message <- renderText({"Before clicking this button, load association results for
         a phenotype and then choose a chromosome or gene."})
     } else{
       if(is.null(state$window.left) | is.null(state$window.right)){
-        output$message = renderText({"Before clicking this button, choose a chromosome or gene."})
+        output$message <- renderText({"Before clicking this button, choose a chromosome or gene."})
       } else{
         # switch to appropriate tab
         updateTabsetPanel(session, inputId = "Tabset", selected = "manhattan.chr")
         # clear error message
-        output$message = NULL
+        output$message <- NULL
         # set new window parameters
-        window.center = 0.5*(state$window.left + state$window.right)
-        window.width = 0.5*(state$window.right - state$window.left)
-        state$window.left = max(window.center - 2*window.width, 0)
-        state$window.right = min(window.center + 2*window.width, state$max.BP)
+        window.center <- 0.5*(state$window.left + state$window.right)
+        window.width <- 0.5*(state$window.right - state$window.left)
+        state$window.left <- max(window.center - 2*window.width, state$min.BP)
+        state$window.right <- min(window.center + 2*window.width, state$max.BP)
         # adjust window
-        state = adjust_window(state)
+        state <- adjust_window(state)
         # adjust slider
-        state$slider.left = state$window.left
-        state$slider.right = state$window.right
+        state$slider.left <- state$window.left
+        state$slider.right <- state$window.right
         # produce plot
-        output$plot.annotations = renderPlot({
+        output$plot.annotations <- renderPlot({
           withProgress(message = 'Rendering plot...', value = 0, {
-            plot_sears_tower_state(state, annotations)})
+            plot_combined_state(state, annotations)})
         })
       }
     }
@@ -309,10 +343,10 @@ server <- function(input, output, session) {
        !is.null(state$slider.right)){
       
       # convert from BP to Mb
-      window.left.Mb = round(1e-6*state$window.left, 1)
-      window.right.Mb = round(1e-6*state$window.right, 1)
-      slider.left.Mb = round(1e-6*state$slider.left, 1)
-      slider.right.Mb = round(1e-6*state$slider.right, 1)
+      window.left.Mb <- round(1e-6*state$window.left, 1)
+      window.right.Mb <- round(1e-6*state$window.right, 1)
+      slider.left.Mb <- round(1e-6*state$slider.left, 1)
+      slider.right.Mb <- round(1e-6*state$slider.right, 1)
       
       # create slider
       sliderInput("window", label = NULL,

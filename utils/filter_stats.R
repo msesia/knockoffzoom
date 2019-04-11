@@ -1,18 +1,8 @@
 #!/usr/bin/env Rscript
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
-
-# Install packages bigsnpr and bigstatsr
-# devtools::install_github("privefl/bigstatsr")
-# devtools::install_github("privefl/bigsnpr")
-
-# Documentation here:
-# https://privefl.github.io/bigsnpr/reference/index.html
-# https://privefl.github.io/bigstatsr/reference/big_spLinReg.html
+#.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 # Load packages
 suppressMessages(library(tidyverse))
-suppressMessages(library(devtools))
-suppressMessages(library(bigsnpr))
 
 # Default arguments (for debugging)
 stats.basename  <- "../tmp/example_res2"
@@ -75,7 +65,12 @@ Selections <- Stats %>% knockoff.filter(fdr=0.1, offset=1)
 cat(sprintf("Selections:\n"))
 Selections %>% print()
 
-# Save selections
-out.file <- sprintf("%s.txt", out.basename)
+# Save list of discoveries
+out.file <- sprintf("%s_discoveries.txt", out.basename)
 Selections %>% write_delim(out.file, delim=" ")
-cat(sprintf("Results written on: %s\n", out.file))
+cat(sprintf("Discoveries written on: %s\n", out.file))
+
+# Save list of test statistics
+out.file <- sprintf("%s_stats.txt", out.basename)
+Stats %>% write_delim(out.file, delim=" ")
+cat(sprintf("Test statistics written on: %s\n", out.file))

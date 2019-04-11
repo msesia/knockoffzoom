@@ -1,7 +1,7 @@
-library(ggrepel)
-library(latex2exp)
-library(egg)
-library(grid)
+suppressMessages(library(ggrepel))
+suppressMessages(library(latex2exp))
+suppressMessages(library(egg))
+suppressMessages(library(grid))
 
 font.size <- 20
 
@@ -369,7 +369,12 @@ plot_genes <- function(window.chr, window.left, window.right, Exons.canonical,
 plot_combined <- function(window.chr, window.left, window.right, Discoveries, LMM, LMM.clumped,
                              Annotations.func=NULL, Exons.canonical=NULL,
                              highlight.gene=NULL, max.gene.rows=4) {
-
+    
+    # Make sure that the window is not empty
+    if(window.right<=window.left) {
+        return(ggplot(tibble()) + geom_blank())
+    }
+    
     # Make Chicago plot with KnockoffZoom discoveries
     p.knockoffs <- plot_chicago(window.chr, window.left, window.right, Discoveries)
         
