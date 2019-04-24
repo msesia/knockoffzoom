@@ -38,6 +38,7 @@ function _spinner() {
         start)
             # calculate the column where spinner and status msg will be displayed
             let column=$(tput cols)-${#2}-8
+
             # display message and position the cursor in $column column
             echo -ne ${2}
             printf "%${column}s"
@@ -83,6 +84,7 @@ function start_spinner {
     # set global spinner pid
     _sp_pid=$!
     disown
+    sleep 0.01            
 }
 
 function stop_spinner {

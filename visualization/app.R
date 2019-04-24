@@ -1,6 +1,5 @@
 suppressMessages(library(tidyverse))
 suppressMessages(library(gridExtra))
-suppressMessages(library(tikzDevice))
 suppressMessages(library(shiny))
 suppressMessages(library(dqshiny))
 source("utils_clumping.R")
@@ -8,27 +7,26 @@ source("utils_plotting.R")
 source("utils_shiny.R")
 source("utils_manhattan.R")
 
-data.dir <- "../results"
-annotations.dir <- "../data"
+data_dir <- "../data"
+res_dir <- "../results"
 chromosomes <- 1:22
 phenotypes <- c("example")
 
-annotations <- load_annotations(annotations.dir)
+annotations <- load_annotations(data_dir)
 genes <- unique(annotations$Exons.canonical$name2)
 
 # create user interface
-ui <- fluidPage(
+ui <- fluidPage(theme = "theme.css",
 
   # title
-  headerPanel('KnockoffZoom'),
+  headerPanel('KnockoffZoom for the UK Biobank'),
   
   # side panel with inputs, error messages, and information box
   fluidRow(
     column(3,
       h4("Step 1: Select a phenotype."),
       wellPanel(
-        selectInput(inputId = 'phenotype', label = 'Phenotype', 
-                    choices = c(phenotypes)),    
+        selectInput(inputId = 'phenotype', label = 'Phenotype', choices = c(phenotypes)),    
         actionButton("load.results", "Load results")
       ),
       h4("Step 2: Type a chromosome or gene."),
@@ -50,15 +48,18 @@ ui <- fluidPage(
       wellPanel(
         fluidRow(
           column(6,actionButton("zoom.in", "Zoom in (slider)")),
-          column(6,actionButton("zoom.out", "Zoom out (x2)"))          
+          column(6,actionButton("zoom.out", "Zoom out (x10)"))          
         )
       ),
+      actionButton("info", "?"),
       span(textOutput("message"), style="color:red"),
-      absolutePanel(bottom = 0, left = 0, width = "24%", fixed = TRUE,
+      absolutePanel(
+        bottom = 0, left = 0, width = "24%",
+        fixed = TRUE,
         div(
           style="padding: 8px; border: 5px solid #CCC; background: #FFFFFF;", 
           HTML("<font size=\"3\">This website presents the results of the KnockoffZoom methodology
-            applied to a toy dataset. See [bioRxiv link] for the manuscript, and <a href=\"http://web.stanford.edu/group/candes/knockoffs\" target=\"_blank\"/>this webpage</a> 
+            applied to the UK Biobank data. See [bioRxiv link] for the manuscript, and <a href=\"http://web.stanford.edu/group/candes/knockoffs\" target=\"_blank\"/>this webpage</a> 
             for more information.</font>")
         )
       )
@@ -72,39 +73,15 @@ ui <- fluidPage(
                          plotOutput('plot.manhattan', width = "100%", height = "700px")),
                 tabPanel(title = "Locus", value = "manhattan.chr", 
                          h4(textOutput("placeholder.locus")),
-                         splitLayout(cellWidths = c("3.3%", "77.4%", "19.3%"), 
+                         splitLayout(width = "100%", cellWidths = c("4.6%", "76.1%", "19.3%"), 
                                      {}, uiOutput("slider"), {}),
-                         plotOutput('plot.annotations', width = "100%", height = "700px"))
+                         plotOutput('plot.annotations', width = "100%", height = "700px")
+                         )
     )
   )
 )
 )
 
-find_chr_boundaries <- function(association_results, chr) {
-    # Initialize boundaries
-    min.BP <- NULL
-    max.BP <- NULL
-    
-    # Look at the range of LMM p-values
-    if(nrow(association_results$LMM)>0) {
-        if(nrow(filter(association_results$LMM, CHR==chr))>0) {
-            min.BP <- min(filter(association_results$LMM, CHR==chr)$BP)
-            max.BP <- max(filter(association_results$LMM, CHR==chr)$BP)
-        } else {
-            min.BP <- 0
-            max.BP <- 0
-        }
-    } else {
-        min.BP <- 0
-        max.BP <- 0
-    }
-
-    # Return boundaries
-    boundaries <- c()
-    boundaries$min.BP <- min.BP
-    boundaries$max.BP <- max.BP
-    return(boundaries)
-}
 
 # back-end code
 server <- function(input, output, session) {
@@ -122,6 +99,27 @@ server <- function(input, output, session) {
                          slider.right = NULL,
                          highlight.gene = NULL)
   
+  # what to do if "Info" button is pressed
+  observeEvent(input$info, {
+    if(input$Tabset == "manhattan"){
+      box.title <- "Information on low-resolution results"
+      box.message.1 <- "Top: Manhattan plot with BOLT-LMM p-values."
+      box.message.2 <- "Bottom: Manhattan plot with KnockoffZoom test statistics at low-resolution."
+      box.message <- sprintf("%s<br>%s", box.message.1, box.message.2)
+    } else{
+      box.title <- "Information on high-resolution results"
+      box.message.1 <- "Top: Manhattan plot with BOLT-LMM p-values."
+      box.message.2 <- "Middle: Chicago plot with KnockoffZoom test statistics at multiple resolutions."
+      box.message.3 <- "Bottom: Functional annotations and gene positions."
+      box.message <- sprintf("%s<br>%s<br>%s", box.message.1, box.message.2, box.message.3)
+    }
+
+    showModal(modalDialog(
+      title = box.title,
+      HTML(box.message)
+    ))
+  })
+  
   # what to do if "Load association results" button is pressed
   observeEvent(input$load.results, {
     # clear error message
@@ -136,7 +134,6 @@ server <- function(input, output, session) {
       if(input$phenotype != state$phenotype){
         state$chr <- NULL
         state$highlight.gene <- NULL
-        state$min.BP <- NULL
         state$max.BP <- NULL
         state$window.left <- NULL
         state$window.right <- NULL
@@ -145,26 +142,20 @@ server <- function(input, output, session) {
         output$plot.annotations <- NULL # important: clear Chicago plot
         output$placeholder.locus <- renderText({"[Select a chromosome or gene to produce locus view.]"})
         state$phenotype <- input$phenotype 
-        state$association_results <- load_association_results(data.dir, input$phenotype)
+        state$association_results <- load_association_results(res_dir, input$phenotype)
       }
     } else{
         state$phenotype <- input$phenotype
         withProgress(message = 'Loading results...', value = 0, {
-          state$association_results <- load_association_results(data.dir, input$phenotype)
+          state$association_results <- load_association_results(res_dir, input$phenotype)
         })
     }
     # produce plot
     output$plot.manhattan <- renderPlot({
       withProgress(message = 'Rendering plot...', value = 0, {
-          if(is.null(state$association_results$Stats)) {
-              showNotification("Missing KnockoffZoom results.")
-          }
-          if(is.null(state$association_results$LMM)) {
-              showNotification("Missing LMM results.")
-          }
-          plot_manhattan_knockoffs(state$association_results$LMM,
-                                   state$association_results$Stats,
-                                   ytrans="identity")
+        plot_manhattan_knockoffs(state$association_results$LMM,
+                                 state$association_results$Pvalues,
+                                 ytrans="identity")
       })
     })
   })
@@ -214,11 +205,11 @@ server <- function(input, output, session) {
           state$window.right <- state$max.BP
           state$slider.left <- state$window.left
           state$slider.right <- state$window.right
-          updateTabsetPanel(session, inputId = "Tabset", selected = "manhattan.chr")          
+          updateTabsetPanel(session, inputId = "Tabset", selected = "manhattan.chr")
           output$plot.annotations <- renderPlot({
             withProgress(message = 'Rendering plot...', value = 0, {
-                plot_combined_state(state, annotations)})
-          })
+              plot_combined_state(state, annotations)})
+            })
         }
       }
   }
@@ -240,18 +231,14 @@ server <- function(input, output, session) {
            # set chromosome appropriately
            filtered_exons <- filter(annotations$Exons.canonical, name2==input$gene)
            state$chr <- filtered_exons$chrom[1]
-           chr.boundaries <- find_chr_boundaries(state$association_results, state$chr)
-           state$min.BP <- chr.boundaries$min.BP
-           state$max.BP <- chr.boundaries$max.BP
+           state$max.BP <- max(filter(state$association_results$LMM, CHR==state$chr)$BP)
            # set center of gene to be center of window
            gene_min <- min(filtered_exons$txStart)
            gene_max <- max(filtered_exons$txEnd)
            window.center <- (gene_min + gene_max)/2
            # choose a window of width 1Mb
-           state$window.left <- max(state$min.BP, window.center - 0.25e6)
+           state$window.left <- max(0, window.center - 0.25e6)
            state$window.right <- min(window.center + 0.25e6, state$max.BP)
-           # adjust window in order to avoid cutting in the middle of knockoff blocks
-           state <- adjust_window(state)
            # adjust slider appropriately
            state$slider.left <- state$window.left
            state$slider.right <- state$window.right
@@ -288,7 +275,6 @@ server <- function(input, output, session) {
         # reset window based on slider
         state$window.left <- input$window[1]*1e6
         state$window.right <- input$window[2]*1e6
-        state <- adjust_window(state)
         state$slider.left <- state$window.left
         state$slider.right <- state$window.right
         # produce plot
@@ -316,11 +302,9 @@ server <- function(input, output, session) {
         output$message <- NULL
         # set new window parameters
         window.center <- 0.5*(state$window.left + state$window.right)
-        window.width <- 0.5*(state$window.right - state$window.left)
-        state$window.left <- max(window.center - 2*window.width, state$min.BP)
-        state$window.right <- min(window.center + 2*window.width, state$max.BP)
-        # adjust window
-        state <- adjust_window(state)
+        window.width <- 10*(state$window.right - state$window.left)
+        state$window.left <- max(window.center - 0.5*window.width, state$min.BP)
+        state$window.right <- min(window.center + 0.5*window.width, state$max.BP)
         # adjust slider
         state$slider.left <- state$window.left
         state$slider.right <- state$window.right
@@ -341,6 +325,15 @@ server <- function(input, output, session) {
        !is.null(state$window.right) & 
        !is.null(state$slider.left) &
        !is.null(state$slider.right)){
+      
+      # Make sure that the two ends of the slider do not overlap
+      if(state$window.right<=state$window.left+0.2e6) {
+        state.center <- (state$window.left+state$window.right)/2
+        state$window.left <- state.center-0.1e6
+        state$window.right <- state.center+0.1e6
+        state$slider.left <- state$window.left
+        state$slider.right <- state$window.right
+      }
       
       # convert from BP to Mb
       window.left.Mb <- round(1e-6*state$window.left, 1)

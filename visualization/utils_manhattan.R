@@ -1,7 +1,8 @@
 suppressMessages(library(cowplot))
 suppressMessages(library(latex2exp))
 
-font.size <- 12
+font.size <- 20
+dot.size <- 2.5
 
 knockoff.threshold <- function(W, fdr=0.10, offset=1) {
   if(offset>1 | offset<0) {
@@ -51,7 +52,7 @@ manhattan_simple <- function(gwas.don, axisdf, limit.left, limit.right,
         ggplot(aes(x=BPcum, y=-log10(P))) +
     
         # Show all points
-        geom_point( aes(color=as.factor(CHR)), alpha=0.8, size=1.3) +
+        geom_point( aes(color=as.factor(CHR)), alpha=0.8, size=dot.size) +
         scale_color_manual(values = rep(c("darkgrey", "black"), 22 )) +
 
         # Show significance threshold
@@ -91,7 +92,7 @@ manhattan_knock <- function(gwas.don, axisdf, limit.left, limit.right,
         ggplot(aes(x=BPcum, y=W)) +
     
         # Show all points
-        geom_point( aes(color=as.factor(CHR)), alpha=0.8, size=1.3) +
+        geom_point( aes(color=as.factor(CHR)), alpha=0.8, size=dot.size) +
         scale_color_manual(values = rep(c("darkgrey", "black"), 22 )) +
 
         # Show significance threshold
@@ -116,9 +117,6 @@ manhattan_knock <- function(gwas.don, axisdf, limit.left, limit.right,
 }
 
 plot_manhattan <- function(gwas, ytrans="log10") {
-    if(is.null(gwas)) {
-        return(ggplot(tibble()) + geom_blank())
-    }
     
     don <- pre_process(gwas)
     
@@ -138,48 +136,41 @@ plot_manhattan <- function(gwas, ytrans="log10") {
 plot_manhattan_knockoffs <- function(LMM, Knockoffs, ytrans="identity", chr=NULL) {
     
     if(!is.null(chr)) {
-        if(!is.null(LMM)) LMM <- LMM %>% filter(CHR==chr)
-        if(!is.null(Knockoffs)) Knockoffs <- Knockoffs %>% filter(CHR==chr)
+      LMM <- LMM %>% filter(CHR==chr)
+      Knockoffs <- Knockoffs %>% filter(CHR==chr)
     }
+  
+    # Create chromosome blocks
+    manhattan.don <- pre_process(LMM)
+    # Compute plot limits
+    limit.left <- min(manhattan.don$BPcum)
+    limit.right <- max(manhattan.don$BPcum)
+    # Find centers of each chromosome
+    axisdf = manhattan.don %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
 
-    if(!is.null(LMM)) {
-        # Create chromosome blocks
-        LMM.don <- pre_process(LMM)
-        # Compute plot limits
-        limit.left <- min(LMM.don$BPcum)
-        limit.right <- max(LMM.don$BPcum)
-        # Find centers of each chromosome
-        axisdf = LMM.don %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
-
-        # Make LMM Manhattan plot
-        p.manhattan <- manhattan_simple(LMM.don, axisdf, limit.left, limit.right, ytrans=ytrans)
-        p.manhattan <- p.manhattan +
-            ylab(TeX("$-\\log_{10}(p)$")) +
-            theme(axis.title.x=element_blank())
-    } else {
-        p.manhattan <- ggplot(tibble()) + geom_blank()
-    }
+    # Make LMM Manhattan plot
+    p.manhattan <- manhattan_simple(manhattan.don, axisdf, limit.left, limit.right, ytrans=ytrans)
+    p.manhattan <- p.manhattan +
+        ylab(TeX("$-\\log_{10}(p)$")) +
+        theme(axis.title.x=element_blank())
     
-    if(!is.null(Knockoffs)) {
-        # Transform knockoffs results into pseudo p-values
-        W.thresh <- knockoff.threshold(Knockoffs$W)
-        Knockoffs <- Knockoffs %>% 
-            filter(W>0) %>% 
-            mutate(SNP=SNP.lead, BP=BP.lead) %>%
-            select(CHR, SNP, BP, W)
-
-        # Create chromosome blocks
-        Knockoffs.don <- pre_process(Knockoffs)
-        # Find centers of each chromosome
-        axisdf = Knockoffs.don %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
-        # Make Knockoffs Manhattan plot
-        p.knockoffs <- manhattan_knock(Knockoffs.don, axisdf, limit.left, limit.right, ytrans=ytrans,
-                                       yintercept=W.thresh)
-        p.knockoffs <- p.knockoffs +
-            scale_y_continuous(name="Test statistics", labels=function(x) round(x,3))
-    } else {
-        p.knockoffs <- ggplot(tibble()) + geom_blank()
-    }
+    # Transform knockoffs results into pseudo p-values
+    W.thresh <- knockoff.threshold(Knockoffs$W)
+    Knockoffs <- Knockoffs %>% 
+        filter(W>0) %>% 
+        mutate(SNP=SNP.lead, BP=BP.lead) %>%
+        select(CHR, SNP, BP, W)
+       
+    # Create chromosome blocks
+    #Knockoffs.don <- pre_process(Knockoffs)
+    Knockoffs.don <- Knockoffs %>%
+        select(CHR, BP, W) %>%
+        left_join(manhattan.don, by = c("CHR", "BP"))
+    # Make Knockoffs Manhattan plot
+    p.knockoffs <- manhattan_knock(Knockoffs.don, axisdf, limit.left, limit.right, ytrans=ytrans,
+                                   yintercept=W.thresh)
+    p.knockoffs <- p.knockoffs +
+        scale_y_continuous(name="Test statistics", labels=function(x) round(x,3))
     
     # Modify plots if we are focusing on a single chromosome
     if(!is.null(chr)) {
