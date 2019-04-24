@@ -8,6 +8,9 @@
 # Authors: Matteo Sesia
 # Date:    07/19/2018
 
+set -e
+# Any subsequent(*) commands which fail will cause the shell script to exit immediately
+
 # Temporary storage of intermediate files
 TMP_DIR="../tmp"
 mkdir -p $TMP_DIR
@@ -19,8 +22,8 @@ CHR_LIST=$(seq 21 22)
 RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
 
 # Utility scripts
-CLUSTER_VARIANTS="Rscript --vanilla ../utils/cluster.R"
-PARTITION_VARIANTS="Rscript --vanilla ../utils/partition.R"
+CLUSTER_VARIANTS="Rscript --vanilla utils/cluster.R"
+PARTITION_VARIANTS="Rscript --vanilla utils/partition.R"
 
 # Which operations should we perform?
 FLAG_COMPUTE_LD=0

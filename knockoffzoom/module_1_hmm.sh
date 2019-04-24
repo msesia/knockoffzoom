@@ -8,6 +8,9 @@
 # Authors: Matteo Sesia
 # Date:    07/19/2018
 
+set -e
+# Any subsequent(*) commands which fail will cause the shell script to exit immediately
+
 # Temporary storage of intermediate files
 TMP_DIR="../tmp"
 mkdir -p $TMP_DIR
@@ -16,9 +19,9 @@ mkdir -p $TMP_DIR
 CHR_LIST=$(seq 21 22)
 
 # Utility scripts
-BGEN_TO_HAPST="../utils/bgen_to_hapst.sh"
-HAPST_TO_INP="../utils/hapst_to_inp.sh"
-VERIFY_HAPS="Rscript --vanilla ../utils/verify_haps.R"
+BGEN_TO_HAPST="utils/bgen_to_hapst.sh"
+HAPST_TO_INP="utils/hapst_to_inp.sh"
+VERIFY_HAPS="Rscript --vanilla utils/verify_haps.R"
 
 # Which operations should we perform?
 FLAG_CONVERT_HAP=1

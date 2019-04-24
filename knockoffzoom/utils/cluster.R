@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 LocationOfThisScript = function() {
     # Solution from:
@@ -79,9 +78,9 @@ cat("done.\n")
 
 cat("Computing clustering dendrogram... ")   
 if(nrow(Sigma) > 10000) {
-    Sigma.clust <- adjClust(Sigma.dist,h=10000)       # Makes contiguous groups
+    Sigma.clust <- adjclust::adjClust(Sigma.dist,h=10000)       # Makes contiguous groups
 } else {
-    Sigma.clust <- adjClust(Sigma.dist)               # Makes contiguous groups
+    Sigma.clust <- adjclust::adjClust(Sigma.dist)               # Makes contiguous groups
 }
 cat("done.\n")
 

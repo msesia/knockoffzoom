@@ -8,10 +8,10 @@ URL_REMOTE="http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/"
 FUNC_FILE="wgEncodeBroadHmmGm12878HMM.txt"
 GENE_FILE="ncbiRefSeq.txt"
 
-mkdir -p "data"
-mkdir -p "data/annotations"
+mkdir -p "../data"
+mkdir -p "../data/annotations"
 
-cd "data/annotations"
+cd "../data/annotations"
 
 # Download functional annotation file
 if [ ! -f $FUNC_FILE ]; then

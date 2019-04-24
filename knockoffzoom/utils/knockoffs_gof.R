@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 LocationOfThisScript = function() {
     # Solution from:
@@ -32,10 +31,10 @@ local.source <- function(script.name) {
 }
 
 # Default arguments (for debugging)
-stats.basename <- "../tmp/example_chr21_res2"
-key.file       <- "../tmp/example_chr21_res2.key"
-groups.file    <- "../tmp/example_chr21_groups2.txt"
-out.basename   <- "../results/example_chr21_res2"
+stats.basename <- "../../tmp/example_chr21_res2"
+key.file       <- "../../tmp/example_chr21_res2.key"
+groups.file    <- "../../tmp/example_chr21_groups2.txt"
+out.basename   <- "../../results/example_chr21_res2"
 
 # Input arguments
 args <- commandArgs(trailingOnly=TRUE)

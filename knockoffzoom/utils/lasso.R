@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 # Install packages bigsnpr and bigstatsr
 # devtools::install_github("privefl/bigstatsr")
@@ -15,12 +14,12 @@ suppressMessages(library(devtools))
 suppressMessages(library(bigsnpr))
 
 # Default arguments (for debugging)
-fbm.file       <- "../tmp/example_res2.rds"
-key.basename <- "../tmp/example_chr?_res2.key"
-pheno.file     <- "../data/phenotypes/phenotypes.tab"
+fbm.file       <- "../../tmp/example_res2.rds"
+key.basename <- "../../tmp/example_chr?_res2.key"
+pheno.file     <- "../../data/phenotypes/phenotypes.tab"
 pheno.name     <- "y"
-out.basename   <- "../tmp/example_res2"
-                                        
+out.basename   <- "../../tmp/example_res2"
+
 # Input arguments
 args <- commandArgs(trailingOnly=TRUE)
 fbm.file       <- as.character(args[1])
@@ -170,9 +169,9 @@ W.stats <- function(Z, knockoff) {
 
 Stats <- Lasso.res %>%
     select("CHR", "Group", "SNP", "BP", "Z") %>%
-    filter(Z!=0) %>% 
+    filter(Z!=0) %>%
     left_join(Variants, by = c("CHR", "Group", "SNP", "BP")) %>%
-    group_by(CHR, Group) %>% 
+    group_by(CHR, Group) %>%
     summarize(W = W.stats(abs(Z),Knockoff),
               Lead=which.max(abs(Z)), SNP.lead=SNP[Lead], BP.lead=BP[Lead],
               Size=n()) %>%

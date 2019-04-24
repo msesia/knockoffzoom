@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 # Install package bigsnpr
 # devtools::install_github("privefl/bigsnpr")
@@ -8,8 +7,8 @@
 # https://privefl.github.io/bigsnpr/reference/index.html
 
 # Default arguments (for debugging)
-geno.basename <- "../tmp/example_res2"
-out.basename  <- "../tmp/example_res2"
+geno.basename <- "../../tmp/example_res2"
+out.basename  <- "../../tmp/example_res2"
 
 # Input arguments
 args <- commandArgs(trailingOnly=TRUE)
@@ -19,7 +18,6 @@ out.basename  <- as.character(args[2])
 cat("Converting augmented genotypes into FBM...\n")
 
 # Load packages
-suppressMessages(library(tidyverse))
 suppressMessages(library(devtools))
 suppressMessages(library(bigsnpr))
 

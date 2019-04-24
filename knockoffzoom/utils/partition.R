@@ -1,10 +1,9 @@
 #!/usr/bin/env Rscript
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 LocationOfThisScript = function() {
     # Solution from:
     # https://github.com/molgenis/molgenis-pipelines/wiki/How-to-source-another_file.R-from-within-your-R-script
-    
+
     this.file = NULL
     # This file may be 'sourced'
     for (i in -(1:sys.nframe())) {
@@ -22,7 +21,7 @@ LocationOfThisScript = function() {
     # If multiple --file arguments are given, R uses the last one
     res = tail(res[res != ""], 1)
     if (0 < length(res)) return(dirname(res))
-    
+
     # Both are not the case. Maybe we are in an R GUI?
     return(NULL)
 }
@@ -32,11 +31,11 @@ local.source <- function(script.name) {
 }
 
 # Default arguments (for debugging)
-dendro.file  <- "../tmp/example_chr21.RData"
-bim.file     <- "../data/genotypes/example_chr21.bim"
-qc.file      <- "../data/qc/variants_qc.txt"
+dendro.file  <- "../../tmp/example_chr21.RData"
+bim.file     <- "../../data/genotypes/example_chr21.bim"
+qc.file      <- "../../data/qc/variants_qc.txt"
 resolution   <- 2
-out.basename <- "../tmp/example_chr21"
+out.basename <- "../../tmp/example_chr21"
 
 # Input arguments
 args <- commandArgs(trailingOnly=TRUE)

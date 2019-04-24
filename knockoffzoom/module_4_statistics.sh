@@ -8,6 +8,9 @@
 # Authors: Matteo Sesia
 # Date:    07/19/2018
 
+set -e
+# Any subsequent(*) commands which fail will cause the shell script to exit immediately
+
 # Temporary storage of intermediate files
 TMP_DIR="../tmp"
 mkdir -p $TMP_DIR
@@ -26,8 +29,8 @@ CHR_LIST=($(seq 21 22))
 RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
 
 # Utility scripts
-BED_TO_FBM="Rscript --vanilla ../utils/make_FBM.R"
-COMPUTE_STATS="Rscript --vanilla ../utils/lasso.R"
+BED_TO_FBM="Rscript --vanilla utils/make_FBM.R"
+COMPUTE_STATS="Rscript --vanilla utils/lasso.R"
 
 # Which operations should we perform?
 FLAG_MAKE_FBM=1

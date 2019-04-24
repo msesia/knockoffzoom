@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 # Input arguments
 resolution <- "Radj1"
@@ -7,7 +6,7 @@ resolution <- "Radj1"
 args <- commandArgs(trailingOnly=TRUE)
 resolution <- as.character(args[1])
 
-library(tidyverse)
+suppressMessages(library(tidyverse))
 
 scratch <- "/scratch/groups/candes/ukbiobank_tmp"
 

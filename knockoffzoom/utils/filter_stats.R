@@ -1,14 +1,13 @@
 #!/usr/bin/env Rscript
-#.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 # Load packages
 suppressMessages(library(tidyverse))
 
 # Default arguments (for debugging)
-stats.basename  <- "../tmp/example_res2"
-groups.basename <- "../tmp/example_chr?_groups2.txt"
-out.basename    <- "../results/example_res2"
-                                        
+stats.basename  <- "../../tmp/example_res2"
+groups.basename <- "../../tmp/example_chr?_groups2.txt"
+out.basename    <- "../../results/example_res2"
+
 # Input arguments
 args <- commandArgs(trailingOnly=TRUE)
 stats.basename  <- as.character(args[1])

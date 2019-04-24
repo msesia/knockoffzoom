@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 LocationOfThisScript = function() {
     # Solution from:
@@ -32,10 +31,10 @@ local.source <- function(script.name) {
 }
 
 # Default arguments (for debugging)
-hmm.basename <- "../tmp/example_chr21"
-inp.basename <- "../tmp/example_chr21"
-groups.file  <- "../tmp/example_chr21_groups2.txt"
-out.basename <- "../tmp/example_chr21"
+hmm.basename <- "../../tmp/example_chr21"
+inp.basename <- "../../tmp/example_chr21"
+groups.file  <- "../../tmp/example_chr21_groups2.txt"
+out.basename <- "../../tmp/example_chr21"
 
 # Input arguments
 args <- commandArgs(trailingOnly=TRUE)
@@ -174,7 +173,7 @@ if(FALSE) {
 
     # Compare SNP column means
     plot(colMeans(X),colMeans(Xk),col=rgb(0,0,0,alpha=0.1), pch=16,cex=1); abline(a=0, b=1, col='red', lty=2)
-    
+
     # Compare correlations between consecutive SNPs
     corrX = unlist(lapply(seq(1,10), function(dj) { sapply((1+dj):ncol(X), function(j) cor(X[,j-dj],X[,j])) }))
     corrXk = unlist(lapply(seq(1,10), function(dj) { sapply((1+dj):ncol(X), function(j) cor(Xk[,j-dj],Xk[,j])) }))

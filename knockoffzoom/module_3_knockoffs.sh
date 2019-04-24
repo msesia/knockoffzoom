@@ -8,6 +8,9 @@
 # Authors: Matteo Sesia
 # Date:    07/19/2018
 
+set -e
+# Any subsequent(*) commands which fail will cause the shell script to exit immediately
+
 # Temporary storage of intermediate files
 TMP_DIR="../tmp"
 mkdir -p $TMP_DIR
@@ -23,9 +26,9 @@ CHR_LIST=$(seq 21 22)
 RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
 
 # Utility scripts
-GENERATE_KNOCKOFFS="Rscript --vanilla ../utils/knockoffs.R"
-KNOCKOFF_GOF="Rscript --vanilla ../utils/knockoffs_gof.R"
-TEST_GOF="Rscript --vanilla ../utils/test_gof.R"
+GENERATE_KNOCKOFFS="Rscript --vanilla utils/knockoffs.R"
+KNOCKOFF_GOF="Rscript --vanilla utils/knockoffs_gof.R"
+TEST_GOF="Rscript --vanilla utils/test_gof.R"
 
 # Which operations should we perform?
 FLAG_GENERATE_KNOCKOFFS=1

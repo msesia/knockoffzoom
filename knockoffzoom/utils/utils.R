@@ -1,4 +1,3 @@
-suppressMessages(library(adjclust))
 suppressMessages(library(tidyverse))
 suppressMessages(library(data.table))
 suppressMessages(library(Matrix))
@@ -6,7 +5,7 @@ suppressMessages(library(Matrix))
 read.inp <- function(basename, n.skip=0, n.load=Inf, progress=FALSE) {
     # Read haplotype sequences from INP file
     H.file <- paste(basename, ".inp", sep="")
-    # Read header of INP file    
+    # Read header of INP file
     n <- as.numeric(read_lines(H.file, n_max=1, skip=0))
     p <- as.numeric(read_lines(H.file, n_max=1, skip=1))
     # Check whether file contains variant positions
@@ -19,7 +18,7 @@ read.inp <- function(basename, n.skip=0, n.load=Inf, progress=FALSE) {
         positions <- rep(NA, p)
         skip.pos <- 0
     }
-    
+
     if(n.load == Inf) {
         n.load <- n
     }
@@ -28,7 +27,7 @@ read.inp <- function(basename, n.skip=0, n.load=Inf, progress=FALSE) {
                header=F, na.strings="?", showProgress=progress) %>%
         as_tibble() %>% filter(substr(V1,1,1)!="#")
     H <- matrix(unlist(strsplit(H$V1,'')) %>% as.integer(), p) %>% t()
-   
+
     # Read variant legend
     legend.file <- paste(basename, ".legend", sep="")
     if (file.exists(legend.file)) {
@@ -90,7 +89,7 @@ transform.hmm <- function(hmm, positions) {
     select.snps <- select.snps[order(hmm$positions[select.snps])]
     hmm.repr <- c()
     hmm.repr$alpha <- hmm$alpha[select.snps,]
-    hmm.repr$theta <- hmm$theta[select.snps,]    
+    hmm.repr$theta <- hmm$theta[select.snps,]
     hmm.repr$r <- sapply(1:length(select.snps), function(j) {
         if(j==1) {
             return(hmm$r[1])
@@ -102,13 +101,13 @@ transform.hmm <- function(hmm, positions) {
     return(hmm.repr)
 }
 
-ld.to.mat <- function (LD, ld.measure, positions) {    
+ld.to.mat <- function (LD, ld.measure, positions) {
     stopifnot(ld.measure %in% c("R", "D"))
 
     stopifnot(length(unique(LD$CHR_A))<=1)
     stopifnot(length(unique(LD$CHR_A))<=1)
     chr <- LD$CHR_A[1]
-    
+
     if(ld.measure == "R") {
         LD <- add_row(LD, R2 = 1,
                       CHR_A=chr, SNP_A=NA, BP_A = tail(positions,1),
@@ -167,13 +166,13 @@ mat.to.dist <- function(S, progress=FALSE) {
 cut.dendrogram <- function(dendrogram, h=NULL, k=NULL) {
     # Verify that either h or r parameter was provided
     stopifnot(!(is.null(h) & is.null(r)))
-    
+
     if(is.null(h)) {
         k.min <- -0.1
         k.max <- 1.1
         while( abs(h.max-h.min) > 1e-12) {
             k.center <- (k.min+k.max)/2
-            groups <- cutree(dendrogram, k=k.center)
+            groups <- adjclust::cutree.chac(dendrogram, k=k.center)
             n.groups <- max(groups)
             if( n.groups <= k ) {
                 k.max <- k.center
@@ -181,10 +180,10 @@ cut.dendrogram <- function(dendrogram, h=NULL, k=NULL) {
             if( n.groups >= k ) {
                 k.min <- k.center
             }
-        }        
+        }
     }
     else {
-        groups <- cutree(dendrogram, h=h)
+        groups <- adjclust::cutree.chac(dendrogram, h=h)
     }
     return(groups)
 }
@@ -193,7 +192,7 @@ is.dendrogram.nested <- function(dendrogram, resolution.list=c(1,2,5,10,20,50)) 
     # Choose groups by cutting the dendrogram
     resolution.list <- resolution.list/100
     groups.list <- sapply(resolution.list, function(resolution) {
-        cutree(Sigma.clust, k = round(resolution*nrow(Variants)))
+        adjclust::cutree.chac(Sigma.clust, k = round(resolution*nrow(Variants)))
     })
     colnames(groups.list) <- resolution.list
 
