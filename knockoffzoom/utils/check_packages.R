@@ -47,10 +47,8 @@ check.packages.dev(packages.dev)
 check.packages.dev <- function(pkg){
     new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
     if (length(new.pkg))
-        devtools::install_bitbucket("msesia/hmm_knockoffs", ref = "master",
-                                    subdir = sprintf("/SNPknock_R/%s", new.pkg),
-                                    auth_user = "msesia", password = "XXX")
+        devtools::install_bitbucket("msesia/hmm_knockoffs", subdir = sprintf("SNPknock_R/%s", new.pkg))
     sapply(pkg, require, character.only = TRUE)
 }
-packages.dev <- c("SNPknockG")
+packages.dev <- c("SNPknock")
 check.packages.dev(packages.dev)

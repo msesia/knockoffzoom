@@ -51,7 +51,7 @@ numCores <- 1       # Use only 1 core because parallel computation is giving som
 cat("Loading R libraries... ")
 local.source("utils.R")
 suppressMessages(library(tidyverse))
-suppressMessages(library(SNPknockG))
+suppressMessages(library(SNPknock))
 suppressMessages(library(snpStats))
 suppressMessages(library(data.table))
 suppressMessages(library(parallel))

@@ -68,6 +68,9 @@ function _spinner() {
                 echo -en "${green}${on_success}${nc}"
             else
                 echo -en "${red}${on_fail}${nc}"
+                echo -e "]"
+                echo -e "\nExiting on error. Check log file."
+                exit
             fi
             echo -e "]"
             ;;
