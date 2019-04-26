@@ -1,5 +1,3 @@
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
-
 library(tidyverse)
 library(SNPknockG)
 library(snpStats)

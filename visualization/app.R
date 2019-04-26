@@ -9,6 +9,7 @@ source("utils_manhattan.R")
 
 data_dir <- "../data"
 res_dir <- "../results"
+lmm_dir <- "../data/lmm"
 chromosomes <- 1:22
 phenotypes <- c("example")
 
@@ -142,12 +143,12 @@ server <- function(input, output, session) {
         output$plot.annotations <- NULL # important: clear Chicago plot
         output$placeholder.locus <- renderText({"[Select a chromosome or gene to produce locus view.]"})
         state$phenotype <- input$phenotype 
-        state$association_results <- load_association_results(res_dir, input$phenotype)
+        state$association_results <- load_association_results(res_dir, lmm_dir, input$phenotype)
       }
     } else{
         state$phenotype <- input$phenotype
         withProgress(message = 'Loading results...', value = 0, {
-          state$association_results <- load_association_results(res_dir, input$phenotype)
+          state$association_results <- load_association_results(res_dir, lmm_dir, input$phenotype)
         })
     }
     # produce plot

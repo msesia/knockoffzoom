@@ -69,7 +69,7 @@ load_annotations <- function(data_dir){
     return(annotations)
 }
 
-load_association_results <- function(data_dir, phenotype){
+load_association_results <- function(data_dir, lmm_dir, phenotype){
 
     # Load knockoffs discovereries
     resolution.list <- c("res2", "res5", "res10", "res20", "res50", "res100")
@@ -104,7 +104,7 @@ load_association_results <- function(data_dir, phenotype){
     Discoveries <- local_fdp(Discoveries, Stats)
 
     # Load LMM p-values
-    lmm.file <- sprintf("%s/%s_lmm.txt", data_dir, phenotype)
+    lmm.file <- sprintf("%s/%s_lmm.txt", lmm_dir, phenotype)
     if(file.exists(lmm.file)) {
         LMM <- read_delim(lmm.file, delim="\t", col_types=cols()) %>% as_tibble()
         if("P_BOLT_LMM" %in% colnames(LMM)) {
@@ -117,7 +117,7 @@ load_association_results <- function(data_dir, phenotype){
     }
 
     # Load clumped LMM results
-    lmm.file <- sprintf("%s/%s_lmm_clumped.txt", data_dir, phenotype)
+    lmm.file <- sprintf("%s/%s_lmm_clumped.txt", lmm_dir, phenotype)
     if(file.exists(lmm.file)) {
         LMM.clumped <- read_delim(lmm.file, delim=" ", col_types=cols()) %>%
             mutate(Phenotype=phenotype, Method="LMM", Importance=-log10(P), Resolution="GWAS") %>%

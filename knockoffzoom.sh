@@ -73,17 +73,17 @@ stop_spinner $?
 
 # Module 3: generate the knockoffs
 start_spinner ' - Running module 3...'
-./module_3_knockoffs.sh &>> "../"$LOG_FILE
+#./module_3_knockoffs.sh &>> "../"$LOG_FILE
 stop_spinner $?
 
 # Module 4: compute the test statistics
 start_spinner ' - Running module 4...'
-./module_4_statistics.sh &>> "../"$LOG_FILE
+#./module_4_statistics.sh &>> "../"$LOG_FILE
 stop_spinner $?
 
 # Module 5: report significant findings
 start_spinner ' - Running module 5...'
-./module_5_discover.sh &>> "../"$LOG_FILE
+#./module_5_discover.sh &>> "../"$LOG_FILE
 stop_spinner $?
 
 #####################

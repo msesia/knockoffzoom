@@ -1,9 +1,8 @@
 #!/usr/bin/env Rscript
-.libPaths("/home/groups/candes/Software/miniconda2/envs/ukb/lib/R/library")
 
 # Default parameters
-clump.file <- "../results/example_lmm_clumped.tab"
-out.file   <- "../results/example_lmm_clumped.txt"
+clump.file <- "../data/lmm/example_lmm_clumped.tab"
+out.file   <- "../data/lmm/example_lmm_clumped.txt"
 
 # Load libraries
 suppressMessages(library(tidyverse))
@@ -42,7 +41,7 @@ if(nrow(Clumped.raw)>0) {
 }
 
 # Load the LMM p-values and add them to the list of clumped results
-lmm.file <- sprintf("../results/example_lmm.txt")
+lmm.file <- sprintf("../data/lmm/example_lmm.txt")
 LMM <- read_tsv(lmm.file, col_types=cols())
 if(! "P" %in% colnames(LMM)) {
     if("P_BOLT_LMM" %in% colnames(LMM)) {
