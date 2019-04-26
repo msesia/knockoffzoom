@@ -48,19 +48,18 @@ The [R](https://www.r-project.org/) (version 3.5.1) code was tested on the follo
    - [tidyverse](https://www.tidyverse.org/) 1.2.1
    - [devtools](https://CRAN.R-project.org/package=devtools) 1.13.6
 
-## Contact
-
-For inquiries, feedback and comments, contact [Matteo Sesia](http://web.stanford.edu/~msesia/).
-
 ## Authors
 
-   - [Matteo Sesia](http://web.stanford.edu/~msesia/), Stanford University.
-   - [Eugene Katsevich](http://web.stanford.edu/~ekatsevi/), Stanford University. (user interface of the Shiny visualization app).
+   - [Matteo Sesia](http://web.stanford.edu/~msesia/) (Stanford University).
+
+## Contributors
+
+   - [Eugene Katsevich](http://web.stanford.edu/~ekatsevi/) (Stanford University). User interface of the Shiny visualization app.
 
 ## License
 
 This software is distributed under the [GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.en.html) and it comes with ABSOLUTELY NO WARRANTY.
 
-## References
+## Further references
 
 Read more about the broader framework of [knockoffs](https://web.stanford.edu/group/candes/knockoffs/).

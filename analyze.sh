@@ -43,7 +43,7 @@ check_dependency () {
     ERROR=1
   fi
 }
-DEPENDENCY_LIST=("plink" "plink2" "fastphase" "datamash" "R")
+DEPENDENCY_LIST=("plink" "plink2" "fastphase" "datamash" "awk" "R")
 start_spinner " - Checking system dependencies..."
 for DEPENDENCY in "${DEPENDENCY_LIST[@]}"; do  
   check_dependency $DEPENDENCY &>> "../"$LOG_FILE
