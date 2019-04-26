@@ -1,21 +1,34 @@
 # KnockoffZoom
 
-A powerful and versatile framework for the statistical analysis of genome-wide association studies.
+A powerful and versatile statistical method for the analysis of genome-wide association data.
 
 ## Overview
 
-[Accompanying paper.](???)
+The goal of *KnockoffZoom* is to identify causal variants for complex traits effectively and precisely through genome-wide fine-mapping, accounting for linkage disequilibrium and controlling the false discovery rate.
+The results leverage the genetic models used for phasing and are equally valid for quantitative and binary traits. For more information, read the accompanying paper.
 
-This repository contains a pipeline for the analysis large GWAS data sets, especially designed for the [UK Biobank](https://www.ukbiobank.ac.uk/).
-The code for the data analysis is provided in the form of Bash and R scripts, while the core algorithms are implemented in the R package [SNPknock](https://bitbucket.org/msesia/snpknock). 
 
-The *KnockoffZoom* methodology consists of different modules, each corresponding to a subset of scripts, as summarized in the following flowchart.
+The code contained in this repository is designed to allow the application of *KnockoffZoom* to large datasets, such as the [UK Biobank](https://www.ukbiobank.ac.uk/).
+Some of the code is provided in the form of Bash and R scripts, while the core algorithms for Monte Carlo knockoff sampling are implemented in the R package [SNPknock](https://bitbucket.org/msesia/snpknock), which should be installed separately.
+
+
+The *KnockoffZoom* methodology is divided into different modules, each corresponding to a separate Bash script, as summarized in the following flowchart.
 
 ![KnockoffZoom flowchart](misc/flowchart.png "KnockoffZoom flowchart")
 
+## Toy dataset
+
+A toy dataset containing 1000 artificial samples typed at 2000 loci (divided between chromosome 21 and 22) is offered as an example in which the *KnockoffZoom* analysis can be carried out on a laptop with a single click. To run the example, install the software dependencies listed below and execute the script `analyze.sh`. The analysis should take approximately 5 minutes on a personal computer. The results can be visualized interactively with the script `visualize.sh`, which will launch a [Shiny](https://shiny.rstudio.com/) app in your browser.
+
+## Real applications
+
+*KnockoffZoom* is computationally efficient and we have successfully applied it to the analysis of the genetic data in the UK Biobank. The computational resources required for this task are summarized in the accompanying paper. 
+The modular nature of our method allows the code contained in each of the 5 main scripts to be easily deployed on a computing cluster for large-scale applications. This task will require some additional user effort compared to the toy example, but the scripts for each module are documented and quite intuitive.
+
+
 ## Software dependencies
 
-The following software is required:
+The following software should be available from your Unix path:
 
    - [PLINK 1.9](https://www.cog-genomics.org/plink/1.9/)
    - [PLINK 2.0](https://www.cog-genomics.org/plink/2.0/) alpha
@@ -35,21 +48,19 @@ The [R](https://www.r-project.org/) (version 3.5.1) code was tested on the follo
    - [tidyverse](https://www.tidyverse.org/) 1.2.1
    - [devtools](https://CRAN.R-project.org/package=devtools) 1.13.6
 
+## Contact
+
+For inquiries, feedback and comments, contact [Matteo Sesia](http://web.stanford.edu/~msesia/).
+
 ## Authors
 
-   - [Matteo Sesia](http://web.stanford.edu/~msesia/) [(Stanford University)](https://www.stanford.edu/)
-
-See also the list of [contributors](misc/contributors.txt) who participated in this project.
-
-## Acknowledgments
-
-- [Christopher Chang](https://github.com/chrchang), for developing [PLINK](https://www.cog-genomics.org/plink) and offering valuable technical support.
-- [Florian Privé](https://privefl.github.io/), for developing [bigsnpr](https://privefl.github.io/bigsnpr/) and promptly replying to related inquiries.
-
-## References
-
-This methodology was developed within the broader scope of [knockoffs](https://web.stanford.edu/group/candes/knockoffs/).
+   - [Matteo Sesia](http://web.stanford.edu/~msesia/), Stanford University.
+   - [Eugene Katsevich](http://web.stanford.edu/~ekatsevi/), Stanford University. (user interface of the Shiny visualization app).
 
 ## License
 
 This software is distributed under the [GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.en.html) and it comes with ABSOLUTELY NO WARRANTY.
+
+## References
+
+Read more about the broader framework of [knockoffs](https://web.stanford.edu/group/candes/knockoffs/).
