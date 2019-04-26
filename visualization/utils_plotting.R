@@ -24,12 +24,32 @@ find_chr_boundaries <- function(association_results, chr) {
             min.BP <- min(filter(association_results$LMM, CHR==chr)$BP)
             max.BP <- max(filter(association_results$LMM, CHR==chr)$BP)
         } else {
-            min.BP <- 0
-            max.BP <- 0
+            if(nrow(association_results$Stats)>0) {
+                if(nrow(filter(association_results$Stats, CHR==chr))>0) { 
+                    min.BP <- min(filter(association_results$Stats, CHR==chr)$BP.min)
+                    max.BP <- max(filter(association_results$Stats, CHR==chr)$BP.max)
+                } else {
+                    min.BP <- 0
+                    max.BP <- 0.1
+                }
+            } else {
+                min.BP <- 0
+                max.BP <- 0.1
+            }
         }
     } else {
-        min.BP <- 0
-        max.BP <- 0
+        if(nrow(association_results$Stats)>0) {
+            if(nrow(filter(association_results$Stats, CHR==chr))>0) { 
+                min.BP <- min(filter(association_results$Stats, CHR==chr)$BP.min)
+                max.BP <- max(filter(association_results$Stats, CHR==chr)$BP.max)
+            } else {
+                min.BP <- 0
+                max.BP <- 0.1
+            }
+        } else {
+            min.BP <- 0
+            max.BP <- 0.1
+        }
     }
 
     # Return boundaries
@@ -257,7 +277,7 @@ plot_chicago <- function(window.chr, window.left, window.right, Discoveries) {
             ggplot() +
             geom_rect(aes(xmin=BP.min, xmax=BP.max, ymin=Height-0.5, ymax=Height+0.5, fill=1-FDP.local),
                       color="black") +
-            scale_fill_gradient(name="Significance (KnockoffZoom)",
+            scale_fill_gradient(name="Local FDP (estimated)",
                                 #low="red1", high="dodgerblue1",
                                 low="gray98", high="gray30",
                                 limits=c(0.5, 1),
@@ -477,7 +497,13 @@ plot_combined <- function(window.chr, window.left, window.right, Discoveries, LM
     p.knockoffs <- plot_chicago(window.chr, window.left, window.right, Discoveries)
 
     # Make plots with LMM p-values
-    p.lmm <- plot_pvalues(window.chr, window.left, window.right, LMM, LMM.clumped)
+    if(nrow(LMM)>0) {
+        p.lmm <- plot_pvalues(window.chr, window.left, window.right, LMM, LMM.clumped)
+    } else {
+        p.lmm <- c()
+        p.lmm$manhattan <- ggplot(tibble()) + geom_blank()
+        p.lmm$clumped <- ggplot(tibble()) + geom_blank()
+    }
 
     # Plot functional annotations
     if(!is.null(Annotations.func)) {

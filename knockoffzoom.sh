@@ -35,11 +35,12 @@ cd knockoffzoom
 
 printf "\nSetup\n"
 # System dependencies
+ERROR=0
 check_dependency () {
   CMD=$1
   if [ ! -x "$(command -v $CMD)" ]; then
-    echo "Error: command $CMD not available"
-    exit
+    echo -e "Error: command $CMD not available"
+    ERROR=1
   fi
 }
 DEPENDENCY_LIST=("plink" "plink2" "fastphase" "datamash" "R")
@@ -47,7 +48,7 @@ start_spinner " - Checking system dependencies..."
 for DEPENDENCY in "${DEPENDENCY_LIST[@]}"; do  
   check_dependency $DEPENDENCY &>> "../"$LOG_FILE
 done
-stop_spinner $?
+stop_spinner $ERROR
 
 # R libraries
 start_spinner " - Checking R library dependencies..."
@@ -72,17 +73,17 @@ stop_spinner $?
 
 # Module 3: generate the knockoffs
 start_spinner ' - Running module 3...'
-#./module_3_knockoffs.sh &>> "../"$LOG_FILE
+./module_3_knockoffs.sh &>> "../"$LOG_FILE
 stop_spinner $?
 
 # Module 4: compute the test statistics
 start_spinner ' - Running module 4...'
-#./module_4_statistics.sh &>> "../"$LOG_FILE
+./module_4_statistics.sh &>> "../"$LOG_FILE
 stop_spinner $?
 
 # Module 5: report significant findings
 start_spinner ' - Running module 5...'
-#./module_5_discover.sh &>> "../"$LOG_FILE
+./module_5_discover.sh &>> "../"$LOG_FILE
 stop_spinner $?
 
 #####################

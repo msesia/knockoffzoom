@@ -26,8 +26,8 @@ CLUSTER_VARIANTS="Rscript --vanilla utils/cluster.R"
 PARTITION_VARIANTS="Rscript --vanilla utils/partition.R"
 
 # Which operations should we perform?
-FLAG_COMPUTE_LD=0
-FLAG_CLUSTER=0
+FLAG_COMPUTE_LD=1
+FLAG_CLUSTER=1
 FLAG_PARTITION=1
 
 #####################

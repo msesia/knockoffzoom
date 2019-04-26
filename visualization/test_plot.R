@@ -6,33 +6,33 @@ source("utils_manhattan.R")
 source("utils_plotting.R")
 source("utils_shiny.R")
 
-data_dir <- "data"
-chromosomes <- 1:22
-phenotype <- "glaucoma"
+data_dir <- "../data"
+res_dir <- "../results"
+chromosomes <- 21:22
+phenotype <- "example"
 
 annotations <- load_annotations(data_dir)
 
 # Load associations
 source("utils_shiny.R")
-association_results <- load_association_results(data_dir, phenotype)
+association_results <- load_association_results(res_dir, phenotype)
 
 source("utils_manhattan.R")
 plot_manhattan_knockoffs(association_results$LMM, association_results$Stats, ytrans="identity")
 
 #Make annotation plot
 source("utils_plotting.R")
-window.chr <- 9
+window.chr <- 21
 window.center <- 41.0
 window.width <- 2
-window.left <- 1e6*max(0, window.center - window.width)
-window.right <- 1e6*min(window.center + window.width,
-                    1e-6*max(filter(association_results$LMM, CHR==window.chr)$BP))
+window.boundaries <- find_chr_boundaries(association_results, window.chr)
+window.left <- window.boundaries$min.BP
+window.right <- window.boundaries$max.BP
 plot_combined(window.chr, window.left, window.right,
               association_results$Discoveries,
               association_results$LMM,
               association_results$LMM.clumped,
               highlight.gene="KIF1B", max.gene.rows=10)
-
 
 Discoveries <- association_results$Discoveries
 LMM <- association_results$LMM

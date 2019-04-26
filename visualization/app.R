@@ -19,7 +19,7 @@ genes <- unique(annotations$Exons.canonical$name2)
 ui <- fluidPage(theme = "theme.css",
 
   # title
-  headerPanel('KnockoffZoom for the UK Biobank'),
+  headerPanel('KnockoffZoom discovery view'),
   
   # side panel with inputs, error messages, and information box
   fluidRow(
@@ -55,11 +55,11 @@ ui <- fluidPage(theme = "theme.css",
       span(textOutput("message"), style="color:red"),
       absolutePanel(
         bottom = 0, left = 0, width = "24%",
-        fixed = TRUE,
+        fixed = TRUE,        
         div(
           style="padding: 8px; border: 5px solid #CCC; background: #FFFFFF;", 
           HTML("<font size=\"3\">This website presents the results of the KnockoffZoom methodology
-            applied to the UK Biobank data. See [bioRxiv link] for the manuscript, and <a href=\"http://web.stanford.edu/group/candes/knockoffs\" target=\"_blank\"/>this webpage</a> 
+            applied to a toy dataset. See [bioRxiv link] for the manuscript, and <a href=\"http://web.stanford.edu/group/candes/knockoffs\" target=\"_blank\"/>this webpage</a> 
             for more information.</font>")
         )
       )
@@ -328,8 +328,8 @@ server <- function(input, output, session) {
       
       # Make sure that the two ends of the slider do not overlap
       if(state$window.right<=state$window.left+0.2e6) {
-        state.center <- (state$window.left+state$window.right)/2
-        state$window.left <- state.center-0.1e6
+        state.center <- max(0,(state$window.left+state$window.right)/2)
+        state$window.left <- max(0,state.center-0.1e6)
         state$window.right <- state.center+0.1e6
         state$slider.left <- state$window.left
         state$slider.right <- state$window.right

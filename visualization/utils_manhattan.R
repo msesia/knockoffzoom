@@ -136,23 +136,26 @@ plot_manhattan <- function(gwas, ytrans="log10") {
 plot_manhattan_knockoffs <- function(LMM, Knockoffs, ytrans="identity", chr=NULL) {
     
     if(!is.null(chr)) {
-      LMM <- LMM %>% filter(CHR==chr)
-      Knockoffs <- Knockoffs %>% filter(CHR==chr)
+        if(nrow(LMM)>0) LMM <- LMM %>% filter(CHR==chr)
+        if(nrow(Knockoffs)>0) Knockoffs <- Knockoffs %>% filter(CHR==chr)
     }
-  
-    # Create chromosome blocks
-    manhattan.don <- pre_process(LMM)
-    # Compute plot limits
-    limit.left <- min(manhattan.don$BPcum)
-    limit.right <- max(manhattan.don$BPcum)
-    # Find centers of each chromosome
-    axisdf = manhattan.don %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
 
-    # Make LMM Manhattan plot
-    p.manhattan <- manhattan_simple(manhattan.don, axisdf, limit.left, limit.right, ytrans=ytrans)
-    p.manhattan <- p.manhattan +
-        ylab(TeX("$-\\log_{10}(p)$")) +
-        theme(axis.title.x=element_blank())
+    if(nrow(LMM)>0) {
+        # Create chromosome blocks
+        don <- pre_process(LMM)
+        # Compute plot limits
+        limit.left <- min(don$BPcum)
+        limit.right <- max(don$BPcum)
+        # Find centers of each chromosome
+        axisdf = don %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
+        # Make LMM Manhattan plot
+        p.manhattan <- manhattan_simple(don, axisdf, limit.left, limit.right, ytrans=ytrans)
+        p.manhattan <- p.manhattan +
+            ylab(TeX("$-\\log_{10}(p)$")) +
+            theme(axis.title.x=element_blank())        
+    } else {
+        p.manhattan <- ggplot(tibble())
+    }
     
     # Transform knockoffs results into pseudo p-values
     W.thresh <- knockoff.threshold(Knockoffs$W)
@@ -160,12 +163,22 @@ plot_manhattan_knockoffs <- function(LMM, Knockoffs, ytrans="identity", chr=NULL
         filter(W>0) %>% 
         mutate(SNP=SNP.lead, BP=BP.lead) %>%
         select(CHR, SNP, BP, W)
-       
+    
     # Create chromosome blocks
-    #Knockoffs.don <- pre_process(Knockoffs)
-    Knockoffs.don <- Knockoffs %>%
-        select(CHR, BP, W) %>%
-        left_join(manhattan.don, by = c("CHR", "BP"))
+    if(nrow(LMM)>0) {
+        Knockoffs.don <- Knockoffs %>%
+            select(CHR, BP, W) %>%
+            left_join(don, by = c("CHR", "BP"))
+    } else {
+        Knockoffs.don <- pre_process(Knockoffs)
+        don <- Knockoffs.don
+        # Compute plot limits
+        limit.left <- min(don$BPcum)
+        limit.right <- max(don$BPcum)
+        # Find centers of each chromosome
+        axisdf = don %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
+    }
+       
     # Make Knockoffs Manhattan plot
     p.knockoffs <- manhattan_knock(Knockoffs.don, axisdf, limit.left, limit.right, ytrans=ytrans,
                                    yintercept=W.thresh)
