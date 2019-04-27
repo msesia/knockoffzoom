@@ -1,72 +1,100 @@
 source("utils_fdp.R")
 
-load_annotations <- function(data_dir){
-    # Functional annotations
-    annotations.func.file <- sprintf("%s/annotations/GM12878_ChromHMM_hg19.txt", data_dir)
-    Annotations.func.raw <- read_tsv(annotations.func.file, col_types=cols(`#bin`=col_integer(),
-                                                                           chromStart=col_integer(),
-                                                                           chromEnd=col_integer(),
-                                                                           name=col_character(),
-                                                                           score=col_integer(),
-                                                                           thickStart=col_integer(),
-                                                                           thickEnd=col_integer()))
-    Annotations.func.raw <- Annotations.func.raw %>% mutate(name=as.factor(name))
-
-    # Remove weird chromosomes and convert colors
-    valid.chrom <- paste("chr", seq(1,22), sep="")
-    Annotations.func <- Annotations.func.raw %>%
-        filter(chrom %in% valid.chrom) %>% mutate(chrom=parse_number(as.character(chrom))) %>%
-        separate(itemRgb, into=c("itemR", "itemG", "itemB"), sep=",", convert=T) %>%
-        mutate(itemColor = rgb(red=itemR, blue=itemB, green=itemG, maxColorValue=255)) %>%
-        arrange(chrom, chromStart)
-
-    # Extract color map
-    annotation.color.map <- Annotations.func %>% group_by(name, itemColor) %>% summarise() %>%
-        ungroup() %>%
-        mutate(name.num=parse_number(as.character(name))) %>%
-        mutate(label=gsub("\\d+_", "",name), label=gsub(fixed("_"), " ",label)) %>%
-        arrange(name.num)
-
-    # Convert names to factors according to color maps
-    Annotations.func <- Annotations.func %>%
-        mutate(name=factor(name, levels=annotation.color.map$name, labels=annotation.color.map$name))
-
-    # Gene annotations
-    annotations.genes.file <- sprintf("%s/annotations/NCBI_genes_hg19.txt", data_dir)
-    Annotations.genes.raw <- read_tsv(annotations.genes.file, col_types=cols(`#bin`=col_integer(),
-                                                                             txStart=col_integer(),
-                                                                             txEnd=col_integer(),
-                                                                             cdsStart=col_integer(),
-                                                                             cdsEnd=col_integer(),
-                                                                             exonCount=col_integer(),
-                                                                             score=col_integer(),
-                                                                             .default=col_character()))
-
-    # Remove weird chromosomes
-    valid.chrom <- paste("chr", seq(1,22), sep="")
-    Annotations.genes <- Annotations.genes.raw %>%
-        filter(chrom %in% valid.chrom) %>% mutate(chrom=parse_number(as.character(chrom))) %>%
-        arrange(chrom)
-
-     # Split rows corresponding to same gene but different exons
-    Exons <- Annotations.genes %>%
-        separate_rows(exonStarts, exonEnds, exonFrames, sep=",", convert=TRUE) %>%
-        drop_na()
-
-    # Pick the canonical transcripts
-    # That is, for each unique "name2", keep only the rows corresponding to the "name"
-    # with the largest sum of exon lengths
-    Exons.canonical <- Exons %>%
-        mutate(exonLength=exonEnds-exonStarts) %>%
-        group_by(name, name2) %>% summarise(Length=sum(exonLength)) %>%
-        ungroup() %>% group_by(name2) %>% top_n(1, Length) %>%
-        inner_join(Exons, by=c("name", "name2"))
-
-    annotations <- c()
-    annotations$Annotations.func <- Annotations.func
-    annotations$Exons.canonical <- Exons.canonical
-
-    return(annotations)
+load_annotations <- function(data_dir) {
+  # Functional annotations
+  annotations.func.file <- sprintf("%s/annotations/wgEncodeBroadHmmGm12878HMM.txt", data_dir)
+  Annotations.func.raw <- read_tsv(annotations.func.file, 
+                                   col_names = FALSE,
+                                   col_types=cols(col_integer(), 
+                                                  col_character(),
+                                                  col_integer(),
+                                                  col_integer(),
+                                                  col_character(),
+                                                  col_integer(),
+                                                  col_character(),
+                                                  col_integer(),
+                                                  col_integer(),
+                                                  col_integer()))
+  names(Annotations.func.raw) = c("#bin", "chrom", "chromStart", "chromEnd",
+                                  "name", "score", "strand", "thickStart", 
+                                  "thickEnd", "itemRgb")
+  
+  Annotations.func.raw <- Annotations.func.raw %>% mutate(name=as.factor(name))
+  
+  # Remove weird chromosomes and convert colors
+  valid.chrom <- paste("chr", seq(1,22), sep="")
+  Annotations.func <- Annotations.func.raw %>%
+    mutate(name=as.factor(name)) %>%
+    filter(chrom %in% valid.chrom) %>% mutate(chrom=parse_number(as.character(chrom))) %>%
+    mutate(itemR = as.integer(floor(itemRgb/256^2) %% 256), 
+           itemG = as.integer(floor(itemRgb/256) %% 256), 
+           itemB = as.integer(itemRgb %% 256)) %>%
+    mutate(itemColor = rgb(red=itemR, blue=itemB, green=itemG, maxColorValue=255)) %>%
+    select(c("#bin", "chrom", "chromStart", "chromEnd", "name", "score",
+             "strand", "thickStart", "thickEnd", "itemR", "itemG", "itemB", "itemColor")) %>%
+    arrange(chrom, chromStart)
+  
+  # Extract color map
+  annotation.color.map <- Annotations.func %>% group_by(name, itemColor) %>% summarise() %>% 
+    ungroup() %>%
+    mutate(name.num=parse_number(as.character(name))) %>% 
+    mutate(label=gsub("\\d+_", "",name), label=gsub(fixed("_"), " ",label)) %>%
+    arrange(name.num)
+  
+  # Convert names to factors according to color maps
+  Annotations.func <- Annotations.func %>%
+    mutate(name=factor(name, levels=annotation.color.map$name, labels=annotation.color.map$name))
+  
+  # Gene annotations
+  annotations.genes.file <- sprintf("%s/annotations/ncbiRefSeq.txt", data_dir)
+  Annotations.genes.raw <- read_tsv(annotations.genes.file, 
+                                    col_names = FALSE,
+                                    col_types=cols(col_integer(),
+                                                   col_character(),
+                                                   col_character(),
+                                                   col_character(),
+                                                   col_integer(),
+                                                   col_integer(),
+                                                   col_integer(),
+                                                   col_integer(),
+                                                   col_integer(),
+                                                   col_character(),
+                                                   col_character(),
+                                                   col_integer(),
+                                                   col_character(),
+                                                   col_character(),
+                                                   col_character(),
+                                                   col_character()))
+  names(Annotations.genes.raw) = c("#bin", "name", "chrom", "strand", "txStart",
+                                   "txEnd", "cdsStart", "cdsEnd", "exonCount",
+                                   "exonStarts", "exonEnds", "score", "name2", 
+                                   "cdsStartStat", "cdsEndStat", "exonFrames")
+  
+  # Remove weird chromosomes
+  valid.chrom <- paste("chr", seq(1,22), sep="")
+  Annotations.genes <- Annotations.genes.raw %>%
+    filter(chrom %in% valid.chrom) %>% mutate(chrom=parse_number(as.character(chrom))) %>%
+    arrange(chrom, `#bin`)
+  
+  # Split rows corresponding to same gene but different exons
+  Exons <- Annotations.genes %>% 
+    separate_rows(exonStarts, exonEnds, exonFrames, sep=",", convert=TRUE) %>%
+    drop_na()
+  
+  # Pick the canonical transcripts
+  # That is, for each unique "name2", keep only the rows corresponding to the "name" 
+  # with the largest sum of exon lengths
+  Exons.canonical <- Exons %>%
+    mutate(exonLength=exonEnds-exonStarts) %>%
+    group_by(name, name2) %>% summarise(Length=sum(exonLength)) %>%
+    ungroup() %>% group_by(name2) %>% top_n(1, Length) %>%
+    inner_join(Exons, by=c("name", "name2")) 
+  
+  annotations = c()
+  annotations$Annotations.func = Annotations.func
+  annotations$Exons.canonical = Exons.canonical
+  
+  return(annotations)
 }
 
 load_association_results <- function(data_dir, lmm_dir, phenotype){

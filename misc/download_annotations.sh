@@ -2,8 +2,6 @@
 #
 #
 
-# FIXME: these files are not the same that we used
-
 URL_REMOTE="http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/"
 FUNC_FILE="wgEncodeBroadHmmGm12878HMM.txt"
 GENE_FILE="ncbiRefSeq.txt"
@@ -20,6 +18,7 @@ if [ ! -f $FUNC_FILE ]; then
   gunzip $FUNC_FILE".gz"
 fi
 
+# Download gene list
 if [ ! -f $GENE_FILE ]; then
   rm -f $GENE_FILE".gz"
   wget $URL_REMOTE$GENE_FILE".gz"

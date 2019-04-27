@@ -51,6 +51,13 @@ start_spinner " - Checking R library dependencies..."
 Rscript --vanilla "visualization/check_packages.R" &>> "../"$LOG_FILE
 stop_spinner $?
 
+# Variant annotations
+start_spinner " - Checking variant annotations..."
+cd misc
+./download_annotations.sh
+cd ..
+stop_spinner $?
+
 #########################
 # Visualize discoveries #
 #########################
