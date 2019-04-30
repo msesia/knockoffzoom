@@ -35,6 +35,7 @@ The following software should be available from your Unix path:
    - [fastPHASE](http://scheet.org/software.html) 1.4.8
    - [GNU datamash](https://www.gnu.org/software/datamash/) 1.3
    - [GNU awk](https://github.com/onetrueawk/awk) 4.0.2
+   - [GNU Core Utilities](https://www.gnu.org/software/coreutils/) 8.22
 
 The [R](https://www.r-project.org/) (version 3.5.1) code was tested on the following configuration:
 
