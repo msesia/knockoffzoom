@@ -2,5 +2,7 @@
 title: "Analysis of the UK Biobank data"
 ---
 
-Interactive visualization tool: [https://msesia.shinyapps.io/knockoffzoom/](https://msesia.shinyapps.io/knockoffzoom/)
+We have applied KnockoffZoom to the analysis of several traits in the [UK Biobank](https://www.ukbiobank.ac.uk/) and obtained many new findings, as discussed in the accompanying paper.
+
+To explore our results interactively, visit: [https://msesia.shinyapps.io/knockoffzoom/](https://msesia.shinyapps.io/knockoffzoom/)
 
