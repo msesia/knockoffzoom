@@ -11,10 +11,7 @@ The results leverage the genetic models used for phasing and are equally valid f
 The code contained in this repository is designed to allow the application of *KnockoffZoom* to large datasets, such as the [UK Biobank](https://www.ukbiobank.ac.uk/).
 Some of the code is provided in the form of Bash and R scripts, while the core algorithms for Monte Carlo knockoff sampling are implemented in the R package [SNPknock](https://bitbucket.org/msesia/snpknock), which should be installed separately.
 
-
-The *KnockoffZoom* methodology is divided into different modules, each corresponding to a separate Bash script, as summarized in the following flowchart.
-
-![KnockoffZoom flowchart](misc/flowchart.png "KnockoffZoom flowchart")
+The *KnockoffZoom* methodology is divided into different modules, each corresponding to a separate Bash script.
 
 ## Toy dataset
 
