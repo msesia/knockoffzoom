@@ -1,0 +1,23 @@
+name: "KnockoffZoom"                                # CHANGE HERE 
+output_dir: "."
+navbar:
+  title: "KnockoffZoom"                             # CHANGE HERE 
+  type: inverse
+  left:
+    - text: "Home"
+      icon: fa-home
+      href: index.html
+    - text: "UK Biobank"
+      icon: fa-dna
+      href:  https://msesia.shinyapps.io/knockoffzoom/
+  right:
+    - text: "Contact"
+      icon: fa-envelope-o
+      href: mailto:msesia@stanford.edu                    # CHANGE HERE 
+    - text: "GitHub"
+      icon: fa-github
+      href: https://github.com/msesia/knockoffzoom       # CHANGE HERE 
+output:
+  html_document:
+    theme: cosmo
+    highlight: textmate
