@@ -9,7 +9,7 @@ navbar:
       href: index.html
     - text: "UK Biobank"
       icon: fa-dna
-      href:  https://msesia.shinyapps.io/knockoffzoom/
+      href: ukbiobank.html
   right:
     - text: "Contact"
       icon: fa-envelope-o

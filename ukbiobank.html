@@ -11,7 +11,7 @@
 
 
 
-<title>KnockoffZoom</title>
+<title>Analysis of the UK Biobank data</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -222,74 +222,12 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">KnockoffZoom</h1>
+<h1 class="title toc-ignore">Analysis of the UK Biobank data</h1>
 
 </div>
 
 
-<p>KnockoffZoom is a powerful and versatile statistical method for the analysis of genome-wide association data.</p>
-<div id="overview" class="section level2">
-<h2>Overview</h2>
-<p>The goal of <em>KnockoffZoom</em> is to identify causal variants for complex traits effectively and precisely through genome-wide fine-mapping, accounting for linkage disequilibrium and controlling the false discovery rate. The results leverage the genetic models used for phasing and are equally valid for quantitative and binary traits. For more information, read the accompanying paper.</p>
-<p>The code contained in this repository is designed to allow the application of <em>KnockoffZoom</em> to large datasets, such as the <a href="https://www.ukbiobank.ac.uk/">UK Biobank</a>. Some of the code is provided in the form of Bash and R scripts, while the core algorithms for Monte Carlo knockoff sampling are implemented in the R package <a href="https://bitbucket.org/msesia/snpknock">SNPknock</a>, which should be installed separately.</p>
-<p>The <em>KnockoffZoom</em> methodology is divided into different modules, each corresponding to a separate Bash script, as summarized in the following flowchart.</p>
-<div class="figure">
-<img src="images/flowchart.png" title="KnockoffZoom flowchart" alt="KnockoffZoom flowchart" />
-<p class="caption">KnockoffZoom flowchart</p>
-</div>
-</div>
-<div id="toy-dataset" class="section level2">
-<h2>Toy dataset</h2>
-<p>A toy dataset containing 1000 artificial samples typed at 2000 loci (divided between chromosome 21 and 22) is offered as an example in which the <em>KnockoffZoom</em> analysis can be carried out on a laptop with a single click. To run the example, install the software dependencies listed below and execute the script <code>analyze.sh</code>. The analysis should take approximately 5 minutes on a personal computer. The results can be visualized interactively with the script <code>visualize.sh</code>, which will launch a <a href="https://shiny.rstudio.com/">Shiny</a> app in your browser.</p>
-</div>
-<div id="real-applications" class="section level2">
-<h2>Real applications</h2>
-<p><em>KnockoffZoom</em> is computationally efficient and we have successfully applied it to the analysis of the genetic data in the UK Biobank. The computational resources required for this task are summarized in the accompanying paper. The modular nature of our method allows the code contained in each of the 5 main scripts to be easily deployed on a computing cluster for large-scale applications. This task will require some additional user effort compared to the toy example, but the scripts for each module are documented and quite intuitive.</p>
-</div>
-<div id="software-dependencies" class="section level2">
-<h2>Software dependencies</h2>
-<p>The following software should be available from your Unix path:</p>
-<ul>
-<li><a href="https://www.cog-genomics.org/plink/1.9/">PLINK 1.9</a></li>
-<li><a href="https://www.cog-genomics.org/plink/2.0/">PLINK 2.0</a> alpha</li>
-<li><a href="http://scheet.org/software.html">fastPHASE</a> 1.4.8</li>
-<li><a href="https://www.gnu.org/software/datamash/">GNU datamash</a> 1.3</li>
-<li><a href="https://github.com/onetrueawk/awk">GNU awk</a> 4.0.2</li>
-<li><a href="https://www.gnu.org/software/coreutils/">GNU Core Utilities</a> 8.22</li>
-</ul>
-<p>The <a href="https://www.r-project.org/">R</a> (version 3.5.1) code was tested on the following configuration:</p>
-<ul>
-<li><a href="https://bitbucket.org/msesia/snpknock">SNPknock</a> 0.8.1</li>
-<li><a href="https://CRAN.R-project.org/package=adjclust">adjclust</a> 0.5.6</li>
-<li><a href="https://privefl.github.io/bigsnpr/">bigsnpr</a> 0.9.1</li>
-<li><a href="https://privefl.github.io/bigstatsr/">bigstatsr</a> 0.8.4</li>
-<li><a href="https://doi.org/doi:10.18129/B9.bioc.snpStats">snpStats</a> 1.32</li>
-<li><a href="https://CRAN.R-project.org/package=Matrix">Matrix</a> 1.2.15</li>
-<li><a href="https://CRAN.R-project.org/package=data.table">data.table</a> 1.12.0</li>
-<li><a href="https://www.tidyverse.org/">tidyverse</a> 1.2.1</li>
-<li><a href="https://CRAN.R-project.org/package=devtools">devtools</a> 1.13.6</li>
-</ul>
-</div>
-<div id="authors" class="section level2">
-<h2>Authors</h2>
-<ul>
-<li><a href="http://web.stanford.edu/~msesia/">Matteo Sesia</a> (Stanford University).</li>
-</ul>
-</div>
-<div id="contributors" class="section level2">
-<h2>Contributors</h2>
-<ul>
-<li><a href="http://web.stanford.edu/~ekatsevi/">Eugene Katsevich</a> (Stanford University). User interface of the Shiny visualization app.</li>
-</ul>
-</div>
-<div id="license" class="section level2">
-<h2>License</h2>
-<p>This software is distributed under the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GPLv3 license</a> and it comes with ABSOLUTELY NO WARRANTY.</p>
-</div>
-<div id="further-references" class="section level2">
-<h2>Further references</h2>
-<p>Read more about the broader framework of <a href="https://web.stanford.edu/group/candes/knockoffs/">knockoffs</a>.</p>
-</div>
+<p>Interactive visualization tool: <a href="https://msesia.shinyapps.io/knockoffzoom/" class="uri">https://msesia.shinyapps.io/knockoffzoom/</a></p>
 
 
 
