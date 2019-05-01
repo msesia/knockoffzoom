@@ -39,7 +39,7 @@ The following software should be available from your Unix path:
 
 The [R](https://www.r-project.org/) (version 3.5.1) code was tested on the following configuration:
 
-   - [SNPknock](https://bitbucket.org/msesia/snpknock) 0.8.0
+   - [SNPknock](https://bitbucket.org/msesia/snpknock) 0.8.1
    - [adjclust](https://CRAN.R-project.org/package=adjclust ) 0.5.6
    - [bigsnpr](https://privefl.github.io/bigsnpr/) 0.9.1
    - [bigstatsr](https://privefl.github.io/bigstatsr/) 0.8.4

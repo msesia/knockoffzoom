@@ -142,8 +142,8 @@ for(block in blocks) {
 
     # Generate knockoff haplotypes
     cat(sprintf("Generating knockoff copies on %d parallel threads... ", numCores))
-    Hk <- SNPknock.knockoffHaplotypes_group(H, hmm$r, hmm$alpha, hmm$theta, Variants$Group, cluster=cl,
-                                            seed=block.start, display_progress=FALSE)
+    Hk <- SNPknock.knockoffHaplotypes(H, hmm$r, hmm$alpha, hmm$theta, groups=Variants$Group, cluster=cl,
+                                      seed=block.start, display_progress=FALSE)
     cat("done.\n")
 
     # Converting haplotypes to genotypes
