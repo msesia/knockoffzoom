@@ -51,7 +51,6 @@ numCores <- 1       # Use only 1 core because parallel computation is giving som
 cat("Loading R libraries... ")
 local.source("utils.R")
 suppressMessages(library(tidyverse))
-suppressMessages(library(SNPknock))
 suppressMessages(library(snpStats))
 suppressMessages(library(data.table))
 suppressMessages(library(parallel))
@@ -69,7 +68,7 @@ r.file <- sprintf("%s_rhat.txt", hmm.basename)
 alpha.file <- sprintf("%s_alphahat.txt", hmm.basename)
 theta.file <- sprintf("%s_thetahat.txt", hmm.basename)
 origchars.file <- sprintf("%s_origchars", hmm.basename)
-hmm <- SNPknock.fp.loadFit(r.file, alpha.file, theta.file, origchars.file)
+hmm <- SNPknock::loadHMM(r.file, alpha.file, theta.file, origchars.file)
 hmm$positions <- scan(inp.file, what=integer(), skip=2, nlines=1, sep=" ", na.strings=c("P"), quiet=T)
 hmm$positions <- hmm$positions[-1]
 cat("done.\n")
@@ -142,8 +141,8 @@ for(block in blocks) {
 
     # Generate knockoff haplotypes
     cat(sprintf("Generating knockoff copies on %d parallel threads... ", numCores))
-    Hk <- SNPknock.knockoffHaplotypes(H, hmm$r, hmm$alpha, hmm$theta, groups=Variants$Group, cluster=cl,
-                                      seed=block.start, display_progress=FALSE)
+    Hk <- SNPknock::knockoffHaplotypes(H, hmm$r, hmm$alpha, hmm$theta, groups=Variants$Group, cluster=cl,
+                                       seed=block.start, display_progress=FALSE)
     cat("done.\n")
 
     # Converting haplotypes to genotypes

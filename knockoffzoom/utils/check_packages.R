@@ -38,17 +38,5 @@ check.packages.dev <- function(pkg){
         devtools::install_github(sprintf("privefl/%s", new.pkg))
     sapply(pkg, require, character.only = TRUE)
 }
-packages.dev <- c("bigstatsr", "bigsnpr")
-check.packages.dev(packages.dev)
-
-########################
-## Bitbucket packages ##
-########################
-check.packages.dev <- function(pkg){
-    new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-    if (length(new.pkg))
-        devtools::install_bitbucket("msesia/SNPknock", subdir = sprintf("SNPknock_R/%s", new.pkg))
-    sapply(pkg, require, character.only = TRUE)
-}
-packages.dev <- c("SNPknock")
+packages.dev <- c("privefl/bigstatsr", "privefl/bigsnpr", "msesia/SNPknock")
 check.packages.dev(packages.dev)
