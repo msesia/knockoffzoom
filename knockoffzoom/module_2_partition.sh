@@ -55,9 +55,6 @@ if [[ $FLAG_COMPUTE_LD == 1 ]]; then
     # List of variants that passed QC
     QC_VARIANTS="../data/qc/variants_qc.txt"
 
-    # List of variants that passed QC
-    BGEN_VARIANT="../data/qc/variants_qc.txt"
-
     # Basename for output files (LD table computed by PLINK)
     OUT_BASENAME=$TMP_DIR"/example_chr"$CHR
 
@@ -93,7 +90,7 @@ if [[ $FLAG_CLUSTER == 1 ]]; then
     echo "Processing chromosome "$CHR" ..."
     echo ""
 
-    # Basename for the input genotype files (PLINK format)
+    # Input genotype files (PLINK format)
     GENO_BIM="../data/genotypes/example_chr"$CHR".bim"
 
     # List of variants that passed QC

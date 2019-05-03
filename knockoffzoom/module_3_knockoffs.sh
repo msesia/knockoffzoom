@@ -70,11 +70,7 @@ if [[ $FLAG_GENERATE_KNOCKOFFS == 1 ]]; then
     # Convert PED to BED
     plink \
       --file $OUT_BASENAME \
-      --no-fid \
-      --no-parents \
-      --no-sex \
-      --no-pheno \
-      --keep-allele-order \
+      --no-fid --no-parents --no-sex --no-pheno --keep-allele-order \
       --make-bed \
       --out $OUT_BASENAME
 

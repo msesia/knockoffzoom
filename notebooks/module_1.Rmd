@@ -1,0 +1,288 @@
+---
+title: "R Notebook"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+```{r}
+chr.list <- c(21,22)
+tmp.dir <- "tmp"
+dir.create(tmp.dir, showWarnings = FALSE)
+res.dir <- "results"
+dir.create(res.dir, showWarnings = FALSE)
+```
+
+```{r}
+# List of individuals that passed QC
+qc.samples <- "../data/qc/samples_qc.txt"
+
+# List of variants that passed QC
+qc.variants <- "../data/qc/variants_qc.txt"
+
+# Phenotype file
+pheno.file <- "../data/phenotypes/phenotypes.tab"
+
+# Phenotype name
+pheno.name <- "y"
+```
+
+## Module 1
+
+### Convert haplotypes into INP format
+
+```{r convert-haplotypes}
+bgen.to.hapst <- function(bgen.basename, chr, qc.samples, qc.variants, hap.basename) {
+  cmd <- "../knockoffzoom/utils/bgen_to_hapst.sh"
+  cmd.args <- sprintf("%s -i %s -c %s -n %s -v %s -b 500 -o %s",
+                      cmd, bgen.basename, chr, qc.samples, qc.variants, hap.basename)
+  #system(cmd.args)
+}
+
+hapst.to.inp <- function(hap.basename, inp.basename) {
+  cmd <- "../knockoffzoom/utils/hapst_to_inp.sh"
+  cmd.args <- sprintf("%s -i %s -o %s",
+                      cmd, hap.basename, inp.basename)
+  #system(cmd.args)
+}
+
+for(chr in chr.list) {
+  # Basename for the input haplotype files (BGEN format)
+  bgen.basename <- sprintf("../data/haplotypes/example_chr%d", chr)
+  # Basename for output haplotype file
+  hap.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  # Convert BGEN file to transposed HAPS file
+  bgen.to.hapst(bgen.basename, chr, qc.samples, qc.variants, hap.basename)
+  # Convert transposed HAPS file into INP file
+  hapst.to.inp(hap.basename, hap.basename)
+}
+```
+
+### Fit HMM
+
+```{r fit-hmm}
+# fastPHASE parameters
+fp.k    <- 50      # Number of haplotype motifs
+fp.it   <- 15      # Number of EM iterations
+fp.seed <- 1234    # Random seed
+
+fit.hmm <- function(inp.file, hmm.basename) {
+  cmd <- "fastphase"
+  cmd.args <- sprintf("%s -Pp -T1 -K%d -g -H-4 -B -C%d -S%d -o%s %s",
+                      cmd, fp.k, fp.it, fp.seed, hmm.basename, inp.file)
+  #system(cmd.args)
+}
+
+for(chr in chr.list) {
+  # Name of input haplotype file
+  inp.file <- sprintf("%s/example_chr%d.inp", tmp.dir, chr)
+  # Basename for hmm file
+  hmm.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  # Fit HMM
+  fit.hmm(inp.file, hmm.basename)
+}
+````
+
+## Module 2
+
+```{r}
+resolution.list <- c("2")
+```
+
+### Compute LD matrix and cluster the variants
+
+```{r LD-cluster}
+compute.ld <- function(geno.basename, qc.samples, qc.variants, ld.basename) {
+  cmd <- "plink"
+  cmd.args <- sprintf("%s --bfile %s --keep %s --extract %s", cmd, geno.basename, qc.samples, qc.variants)
+  cmd.args <- sprintf("%s --r2 dprime --ld-window 1000 --ld-window-kb 1000 --ld-window-r2 0.01", cmd.args)
+  cmd.args <- sprintf("%s --freq --out %s", cmd.args, ld.basename)
+  #system(cmd.args)
+}
+
+cluster.ld <- function(ld.file, geno.bim, qc.variants, dendro.file) {
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/cluster.R"
+  cmd.args <- sprintf("%s %s %s %s %s",
+                        cmd, ld.file, geno.bim, qc.variants, dendro.file)
+  #system(cmd.args)
+}
+
+for(chr in chr.list) {
+  # Basename for the input genotype files (PLINK format)
+  geno.basename <- sprintf("../data/genotypes/example_chr%d", chr)
+  # Basename for LD table computed by PLINK
+  ld.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  # Compute LD matrix
+  compute.ld(geno.basename, qc.samples, qc.variants, ld.basename)
+  # LD table computed by PLINK
+  ld.file <- sprintf("%s.ld", ld.basename)
+  # Basename for the input genotype files (PLINK format)
+  geno.bim <- sprintf("%s.bim", geno.basename)
+  # Dendrogram file
+  dendro.file <- sprintf("%s/example_chr%d.RData", tmp.dir, chr)
+  # Cluster the variants
+  cluster.ld(ld.file, geno.bim, qc.variants, dendro.file)
+}
+```
+
+### Partitioning
+
+```{r partition}
+partition.ld <- function(dendro.file, geno.bim, qc.variants, resolution, blocks.basename) {
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/partition.R"
+  cmd.args <- sprintf("%s %s %s %s %s %s",
+                      cmd, dendro.file, geno.bim, qc.variants, resolution, blocks.basename)
+  #system(cmd.args)
+}
+
+for(chr in chr.list) {
+  # Dendrogram file
+  dendro.file <- sprintf("%s/example_chr%d.RData", tmp.dir, chr)
+  # Basename for the input genotype files (PLINK format)
+  geno.bim <- sprintf("../data/genotypes/example_chr%d.bim", chr)
+  for(resolution in resolution.list) {
+    # Basename for list of blocks at this resolution
+    blocks.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+    # Partition the genome
+    partition.ld(dendro.file, geno.bim, qc.variants, resolution, blocks.basename)
+  }
+}
+```
+
+## Module 3
+
+### Generate the knockoffs
+
+```{r knockoffs}
+generate.knockoffs <- function(hmm.basename, inp.basename, blocks.file, knockoffs.basename) {
+    cmd <- "Rscript --vanilla ../knockoffzoom/utils/knockoffs.R"
+    cmd.args <- sprintf("%s %s %s %s %s",
+                        cmd, hmm.basename, inp.basename, blocks.file, knockoffs.basename)
+    system(cmd.args)
+}
+
+package.knockoffs <- function(knockoffs.basename) {
+    # Package the knockoffs into a BED file
+    cmd <- "plink"
+    cmd.args <- sprintf("%s --file %s --no-fid --no-parents --no-sex --no-pheno --keep-allele-order",
+                        cmd, knockoffs.basename)
+    cmd.args <- sprintf("%s --make-bed --out %s", cmd.args, knockoffs.basename)
+    system(cmd.args)
+    # Add subject information to FAM file
+    sex.file <- sprintf("%s/example_chr%d.sample", tmp.dir, chr)
+    cmd <- sprintf("awk 'FNR > 2 { print $1,$4 }' %s > %s.sex", sex.file, knockoffs.basename)
+    system(cmd)
+    cmd <- sprintf("awk '{ print $1,$2,$3,$4,$6 }' %s.fam > %s.fam.tmp", knockoffs.basename, knockoffs.basename)
+    system(cmd)
+    cmd <- sprintf("join -1 1 -2 1 %s.fam.tmp %s.sex > %s.fam.tmp2",
+                   knockoffs.basename, knockoffs.basename, knockoffs.basename)
+    system(cmd)
+    cmd <- sprintf("awk '{ print $1,$2,$3,$4,$6,$5 }' %s.fam.tmp2 > %s.fam",
+                   knockoffs.basename, knockoffs.basename)
+    system(cmd)
+    cmd <- sprintf("rm -f %s.fam.tmp; rm -f %s.fam.tmp2; rm -f %s.fam.sex; rm -f %s.fam.ped",
+                   knockoffs.basename, knockoffs.basename, knockoffs.basename, knockoffs.basename)
+    system(cmd)
+}
+
+for(chr in chr.list) {
+  # Name of input haplotype file
+  inp.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  # Basename for hmm file
+  hmm.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  for(resolution in resolution.list) {
+    # Basename for list of blocks at this resolution
+    blocks.file <- sprintf("%s/example_chr%d_groups%s.txt", tmp.dir, chr, resolution)
+    # Basename for knockoffs at this resolution
+    knockoffs.basename <- sprintf("%s/example_chr%d_res%s", tmp.dir, chr, resolution)
+    # Generate the knockoffs
+    #generate.knockoffs(hmm.basename, inp.basename, blocks.file, knockoffs.basename)
+    # Package the knockoffs
+    #package.knockoffs(knockoffs.basename)
+  }
+}
+```
+
+## Module 4
+
+### Convert genotypes and knockoffs into a FBM
+
+```{r make-FBM}
+
+make.fbm <- function(fbm.basename, gen.basename, resolution) {
+  # Make list of chromosomes to be merged with the first one
+  merge.list <- sprintf("%s_res%s_mergelist.txt", gen.basename, resolution)
+  system(sprintf("rm -f %s; touch %s", merge.list, merge.list))
+  for(chr in chr.list) {
+    if(chr!=chr.list[1]) {
+      # Basename for the augmented genotype file for this chromosome    
+      chr.basename <- sprintf("%s_chr%d_res%s", gen.basename, chr, resolution)
+      system(sprintf("echo %s >> %s", chr.basename, merge.list))
+    }
+  }
+  # Merge the augmented data from all chromosomes
+  chr.basename.first <- sprintf("%s_chr%d_res%s", gen.basename, chr.list[1], resolution)
+  cmd <- "plink"
+  cmd.args <- sprintf("%s --bfile %s --merge-list %s --make-bed --memory 5000 --out %s",
+                      cmd, chr.basename.first, merge.list, fbm.basename)
+  system(cmd.args)
+  # Convert augmented BED to FBM
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/make_FBM.R"
+  cmd.args <- sprintf("%s %s %s", cmd, fbm.basename, fbm.basename)
+  system(cmd.args)
+
+}
+
+for(resolution in resolution.list) {
+  # Basename for output FBM
+  fbm.basename <- sprintf("%s/example_res%s", tmp.dir, resolution)    
+  # Basename for knockoff-augmented genotype files
+  gen.basename <- sprintf("%s/example", tmp.dir)    
+  # Merge the augmented data from all chromosomes and make FBM
+  #make.fbm(fbm.basename, gen.basename, resolution)
+}
+```
+
+### Compute test statistics
+
+```{r test-stats}
+compute.stats <- function(fbm.file, key.basename, pheno.file, pheno.name, stats.basename) {
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/lasso.R"
+  cmd.args <- sprintf("%s %s %s %s %s %s",
+                      cmd, fbm.file, key.basename, pheno.file, pheno.name, stats.basename)
+  system(cmd.args)
+}
+
+for(resolution in resolution.list) {
+  # Basename for output FBM
+  fbm.file <- sprintf("%s/example_res%s.rds", tmp.dir, resolution)
+  # Knockoff key basename (wildcard ? for chromosome number)
+  key.basename <- sprintf("%s/example_chr?_res%s.key", tmp.dir, resolution)
+  # Basename for statistics file
+  stats.basename <- sprintf("%s/example_res%s", tmp.dir, resolution)
+  # Compute test statistics
+  #compute.stats(fbm.file, key.basename, pheno.file, pheno.name, stats.basename)
+}
+```
+
+## Module 5
+
+### Filter the test statistics
+
+```{r filter-stats}
+filter.stats <- function(stats.basename, blocks.basename, results.basename) {
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/filter_stats.R"
+  cmd.args <- sprintf("%s %s %s %s", cmd, stats.basename, blocks.basename, results.basename)
+  system(cmd.args)
+}
+for(resolution in resolution.list) {
+  # Basename for statistics file
+  stats.basename <- sprintf("%s/example_res%s", tmp.dir, resolution)
+  # Basename for list of blocks at this resolution (wildcard ? for chromosome number)
+  blocks.basename <- sprintf("%s/example_chr?_groups%s.txt", tmp.dir, resolution)
+  # Basename for results file
+  results.basename <- sprintf("%s/example_res%s", res.dir, resolution)
+  # Filter stats and report discoveries
+  filter.stats(stats.basename, blocks.basename, results.basename)
+}
+```

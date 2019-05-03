@@ -24,3 +24,9 @@ data/ukbgene
 *.png
 *.Rhistory
 *.ipynb_checkpoints
+notebooks/tmp/
+notebooks/results/
+notebooks/*.html
+tmp/
+results/
+data/annotations/
