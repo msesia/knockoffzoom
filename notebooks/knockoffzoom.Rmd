@@ -1,0 +1,463 @@
+---
+title: "KnockoffZoom Tutorial"
+author: "Matteo Sesia"
+date: "May 03, 2019"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+  html_notebook:
+    toc: true
+    toc_float: true
+---
+
+## Introduction
+
+This tutorial will guide you through each step of the KnockoffZoom analysis on a toy dataset
+containing 1000 artificial samples typed at 2000 loci.
+
+
+### Dependencies
+
+The following software should be available from your Unix path:
+
+   - [PLINK 1.9](https://www.cog-genomics.org/plink/1.9/)
+   - [PLINK 2.0](https://www.cog-genomics.org/plink/2.0/) alpha
+   - [fastPHASE](http://scheet.org/software.html) 1.4.8
+   - [GNU datamash](https://www.gnu.org/software/datamash/) 1.3
+   - [GNU awk](https://github.com/onetrueawk/awk) 4.0.2
+   - [GNU Core Utilities](https://www.gnu.org/software/coreutils/) 8.22
+
+
+```{r dependencies-R, message=F}
+system("Rscript --vanilla ../knockoffzoom/utils/check_packages.R")
+```
+
+### Setup
+
+```{r, message=FALSE}
+library(tidyverse)
+library(gridExtra)
+library(latex2exp)
+library(kableExtra)
+library(ggdendro)
+```
+
+
+```{r}
+chr.min <- 21
+chr.max <- 22
+chr.list <- seq(chr.min, chr.max)
+tmp.dir <- "tmp"
+dir.create(tmp.dir, showWarnings = FALSE)
+res.dir <- "results"
+dir.create(res.dir, showWarnings = FALSE)
+```
+
+```{r}
+# List of individuals that passed QC
+qc.samples <- "../data/qc/samples_qc.txt"
+
+# List of variants that passed QC
+qc.variants <- "../data/qc/variants_qc.txt"
+
+# Phenotype file
+pheno.file <- "../data/phenotypes/phenotypes.tab"
+
+# Phenotype name
+pheno.name <- "y"
+```
+
+### Preview of the data
+
+```{r phenotypes, fig.width=6, fig.height=3.5, fig.align="center"}
+phenotypes <- read_tsv(pheno.file, col_types=cols())
+phenotypes %>% mutate(sex=as.factor(sex)) %>%
+  ggplot(aes(x=sex, y=y)) + geom_boxplot() + theme_bw()
+```
+
+```{r genotypes}
+# Load list of variants in the dataset
+Variants <- lapply(chr.list, function(chr) {
+  bim.file <- sprintf("../data/genotypes/example_chr%d.bim", chr)
+  bim.colnames <- c("CHR", "SNP", "X0", "BP", "X1", "X2")
+  read_delim(bim.file, delim="\t", col_names=bim.colnames, col_types=cols()) %>%
+    select(CHR, SNP, BP)
+})
+Variants <- do.call("rbind", Variants)
+# Keep only variants that passed QC
+variants.qc <- read_delim(qc.variants, delim=" ", col_names=c("SNP"), col_types=cols())
+Variants <- inner_join(Variants, variants.qc, by = "SNP")
+```
+
+```{r genotypes-preview, echo=F}
+Variants
+```
+
+
+## Module 1
+
+### Haplotype conversion
+
+```{r convert-haplotypes}
+bgen.to.inp <- function(bgen.basename, chr, qc.samples, qc.variants, inp.basename) {
+  # Convert BGEN to transposed HAPS
+  cmd <- "../knockoffzoom/utils/bgen_to_hapst.sh"
+  cmd.args <- sprintf("%s -i %s -c %s -n %s -v %s -b 500 -o %s",
+                      cmd, bgen.basename, chr, qc.samples, qc.variants, inp.basename)
+  system(cmd.args)
+  # Convert Transposed HAPS to INP
+  cmd <- "../knockoffzoom/utils/hapst_to_inp.sh"
+  cmd.args <- sprintf("%s -i %s -o %s",
+                      cmd, inp.basename, inp.basename)
+  system(cmd.args)
+}
+
+for(chr in chr.list) {
+  # Basename for the input haplotype files (BGEN format)
+  bgen.basename <- sprintf("../data/haplotypes/example_chr%d", chr)
+  # Basename for output haplotype file
+  inp.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  # Convert haplotypes into INP file
+  #bgen.to.inp(bgen.basename, chr, qc.samples, qc.variants, inp.basename)
+}
+```
+
+### HMM fitting
+
+```{r fit-hmm}
+fit.hmm <- function(inp.file, hmm.basename) {
+  cmd <- "fastphase"
+  fp.k    <- 50      # Number of haplotype motifs
+  fp.it   <- 15      # Number of EM iterations
+  fp.seed <- 1234    # Random seed
+  cmd.args <- sprintf("%s -Pp -T1 -K%d -g -H-4 -B -C%d -S%d -o%s %s",
+                      cmd, fp.k, fp.it, fp.seed, hmm.basename, inp.file)
+  system(cmd.args)
+}
+
+for(chr in chr.list) {
+  # Name of input haplotype file
+  inp.file <- sprintf("%s/example_chr%d.inp", tmp.dir, chr)
+  # Basename for hmm file
+  hmm.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  # Fit HMM
+  #fit.hmm(inp.file, hmm.basename)
+}
+```
+
+## Module 2
+
+```{r}
+resolution.list <- c("2", "5", "10", "20", "50", "100")
+```
+
+### LD clustering
+
+```{r LD-cluster}
+cluster.ld <- function(geno.basename, geno.bim, qc.variants, dendro.file) {
+  # Basename for LD table computed by PLINK
+  ld.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  # LD table computed by PLINK
+  ld.file <- sprintf("%s.ld", ld.basename)
+  # Compute LD matrix with PLINK
+  cmd <- sprintf("plink --bfile %s --keep %s --extract %s --r2 --freq --ld-window 1000 --ld-window-kb 1000 --ld-window-r2 0.01 --out %s",
+                 geno.basename, qc.samples, qc.variants, ld.basename)
+  system(cmd)
+  # Compute dendrogram with adjacency-constrained clustering
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/cluster.R"
+  cmd.args <- sprintf("%s %s %s %s %s",
+                      cmd, ld.file, geno.bim, qc.variants, dendro.file)
+  system(cmd.args)
+}
+
+for(chr in chr.list) {
+  # Basename for the input genotype files (PLINK format)
+  geno.basename <- sprintf("../data/genotypes/example_chr%d", chr)
+  # Basename for the input genotype files (PLINK format)
+  geno.bim <- sprintf("%s.bim", geno.basename)
+  # Dendrogram file
+  dendro.file <- sprintf("%s/example_chr%d.RData", tmp.dir, chr)
+  # Cluster the genome
+  #cluster.ld(geno.basename, geno.bim, qc.variants, dendro.file)
+}
+```
+
+### Visualizing the dendrogram
+
+```{r visualize-dendrogram, message=F, warning=F, fig.width=7, fig.height=3, fig.align="center", results="hide", eval=F}
+chr <- chr.list[1]
+# Load dendrogram
+dendro.file <- sprintf("%s/example_chr%d.RData", tmp.dir, chr)
+load(dendro.file)
+# Convert dendrogram for plotting
+library(adjclust)
+pdf(file = NULL)
+hclust.fit <- plot(Sigma.clust,mode="corrected")
+dev.off()
+unloadNamespace("adjclust")
+# Plot dendrogram
+dendro <- dendro_data(hclust.fit)
+dendro.data <- segment(dendro) %>% as_tibble
+
+dendro.data %>%
+  ggplot() +
+  geom_segment(aes(x=x, y=y, xend=xend, yend=yend), alpha=0.9, size=0.2) +
+  ylab("") + xlab("") +
+  theme_bw() +
+  theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
+```
+
+### Partitioning
+
+```{r partition}
+partition.ld <- function(dendro.file, geno.bim, qc.variants, resolution, blocks.basename) {
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/partition.R"
+  cmd.args <- sprintf("%s %s %s %s %s %s",
+                      cmd, dendro.file, geno.bim, qc.variants, resolution, blocks.basename)
+  system(cmd.args)
+}
+
+for(chr in chr.list) {
+  # Dendrogram file
+  dendro.file <- sprintf("%s/example_chr%d.RData", tmp.dir, chr)
+  # Basename for the input genotype files (PLINK format)
+  geno.bim <- sprintf("../data/genotypes/example_chr%d.bim", chr)
+  for(resolution in resolution.list) {
+    # Basename for list of blocks at this resolution
+    blocks.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+    # Partition the genome
+    #partition.ld(dendro.file, geno.bim, qc.variants, resolution, blocks.basename)
+  }
+}
+```
+
+### Summary of the LD blocks
+
+```{r LD-summary}
+blocks <- lapply(resolution.list, function(resolution) {
+  blocks.file <- sprintf("%s/example_chr%d_groups%s.txt", tmp.dir, chr, resolution)
+  blocks.res <- read_delim(blocks.file, delim=" ", col_types=cols()) %>%
+    mutate(Resolution=factor(resolution, levels=resolution.list, labels=resolution.list))
+})
+blocks <- do.call("rbind", blocks)
+blocks %>% 
+  group_by(Resolution, Group) %>%
+  summarise(Size=n(), BP.min=min(BP), BP.max=max(BP)) %>%
+  mutate(Width=round((BP.max-BP.min)/1e6,3)) %>%
+  group_by(Resolution) %>%
+  summarise(`Width (Mb)`=mean(Width), `Size (SNPs)`=mean(Size)) %>%
+  kable(align='ccc') %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F)
+```
+
+```{r LD-group-sizes, warning=F, fig.width=5, fig.height=3, fig.align="center"}
+blocks.res <- blocks %>% 
+  filter(Resolution=="10") %>%
+  group_by(Group) %>%
+  summarise(Size=n())
+blocks.res %>% ggplot(aes(x=Size)) +
+  geom_histogram(bins=20) + 
+  xlim(0,50) +
+  xlab("Block size (SNPs)") +
+  theme_bw()
+```
+
+## Module 3
+
+### Knockoff generation
+
+```{r knockoff-generation}
+generate.knockoffs <- function(hmm.basename, inp.basename, blocks.file, knockoffs.basename) {
+  # Generate knockoffs (PED file)
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/knockoffs.R"
+  cmd.args <- sprintf("%s %s %s %s %s",
+                      cmd, hmm.basename, inp.basename, blocks.file, knockoffs.basename)
+  system(cmd.args)
+  # Sample information file
+  sample.file <- sprintf("%s/example_chr%d.sample", tmp.dir, chr)
+  # Convert knockoffs to BED file
+  cmd <- "../knockoffzoom/utils/package_knockoffs.sh"
+  cmd.args <- sprintf("%s %s %s", cmd, knockoffs.basename, sample.file)
+  system(cmd.args)
+}
+
+for(chr in chr.list) {
+  # Name of input haplotype file
+  inp.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  # Basename for hmm file
+  hmm.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
+  for(resolution in resolution.list) {
+    # Basename for list of blocks at this resolution
+    blocks.file <- sprintf("%s/example_chr%d_groups%s.txt", tmp.dir, chr, resolution)
+    # Basename for knockoffs at this resolution
+    knockoffs.basename <- sprintf("%s/example_chr%d_res%s", tmp.dir, chr, resolution)
+    # Generate the knockoffs
+    #generate.knockoffs(hmm.basename, inp.basename, blocks.file, knockoffs.basename)
+  }
+}
+```
+
+### Knockoff diagnostics
+
+```{r knockoff-diagnostics-def}
+source("../knockoffzoom/utils/knockoffs_gof.R")
+diagnose.knockoffs <- function(chr, resolution) {
+  # Basename for knockoffs at this resolution
+  knockoffs.basename <- sprintf("%s/example_chr%d_res%s", tmp.dir, chr, resolution)
+  # Basename for knockoffs diagnostics
+  diagnostics.basename <- sprintf("%s/example_chr%d_res%s", tmp.dir, chr, resolution)
+  # Knockoff key file
+  key.file <- sprintf("%s/example_chr%d_res%s.key", tmp.dir, chr, resolution)
+  # Basename for list of blocks at this resolution
+  blocks.file <- sprintf("%s/example_chr%d_groups%s.txt", tmp.dir, chr, resolution)
+  # Compare LD matrix and frequencies with PLINK
+  cmd <- sprintf("plink --bfile %s --r2 --freq --ld-window 100 --ld-window-kb 1000 --ld-window-r2 0.01 --memory 1000 --out %s",
+                 knockoffs.basename, diagnostics.basename)
+  system(cmd)
+  # Basename for plots
+  plot.basename <- sprintf("%s/example_chr%d_res%s", res.dir, chr, resolution)
+  # Plot knockoff diagnostics
+  pp <- plot.knockoff.diagnostics(diagnostics.basename, key.file, blocks.file, plot.basename)
+}
+```
+
+```{r knockoff-diagnostics, fig.width=6, fig.height=6, fig.align="center"}
+# Compute diagnostics with PLINK
+#diagnose.knockoffs(chr.list[1], resolution.list[1])
+```
+
+
+## Module 4
+
+### Memory mapping
+
+```{r make-FBM}
+make.fbm <- function(gen.basename, fbm.basename, resolution) {
+  # Augment genotypes with knockoffs
+  cmd <- "../knockoffzoom/utils/augment_genotypes.sh"
+  cmd.args <- sprintf("%s %s %s %s %s %s",
+                      cmd, gen.basename, fbm.basename, resolution, chr.min, chr.max)
+  system(cmd.args)
+  # Convert augmented BED to FBM
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/make_FBM.R"
+  cmd.args <- sprintf("%s %s %s", cmd, fbm.basename, fbm.basename)
+  system(cmd.args)
+
+}
+
+for(resolution in resolution.list) {
+  # Basename for output FBM
+  fbm.basename <- sprintf("%s/example_res%s", tmp.dir, resolution)
+  # Basename for knockoff-augmented genotype files
+  gen.basename <- sprintf("%s/example", tmp.dir)
+  # Merge the augmented data from all chromosomes and make FBM
+  #make.fbm(fbm.basename, gen.basename, resolution)
+}
+```
+
+### Computating test statistics
+
+```{r test-stats}
+compute.stats <- function(fbm.file, key.basename, pheno.file, pheno.name, stats.basename) {
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/lasso.R"
+  cmd.args <- sprintf("%s %s %s %s %s %s",
+                      cmd, fbm.file, key.basename, pheno.file, pheno.name, stats.basename)
+  system(cmd.args)
+}
+
+for(resolution in resolution.list) {
+  # Basename for output FBM
+  fbm.file <- sprintf("%s/example_res%s.rds", tmp.dir, resolution)
+  # Knockoff key basename (wildcard ? for chromosome number)
+  key.basename <- sprintf("%s/example_chr?_res%s.key", tmp.dir, resolution)
+  # Basename for statistics file
+  stats.basename <- sprintf("%s/example_res%s", tmp.dir, resolution)
+  # Compute test statistics
+  #compute.stats(fbm.file, key.basename, pheno.file, pheno.name, stats.basename)
+}
+```
+
+## Module 5
+
+### Filtering the test statistics
+
+```{r filter-stats}
+filter.stats <- function(stats.basename, blocks.basename, results.basename) {
+  cmd <- "Rscript --vanilla ../knockoffzoom/utils/filter_stats.R"
+  cmd.args <- sprintf("%s %s %s %s", cmd, stats.basename, blocks.basename, results.basename)
+  system(cmd.args)
+}
+for(resolution in resolution.list) {
+  # Basename for statistics file
+  stats.basename <- sprintf("%s/example_res%s", tmp.dir, resolution)
+  # Basename for list of blocks at this resolution (wildcard ? for chromosome number)
+  blocks.basename <- sprintf("%s/example_chr?_groups%s.txt", tmp.dir, resolution)
+  # Basename for results file
+  results.basename <- sprintf("%s/example_res%s", res.dir, resolution)
+  # Filter stats and report discoveries
+  #filter.stats(stats.basename, blocks.basename, results.basename)
+}
+```
+
+## Results
+
+### Summary of discoveries
+
+```{r discoveries-summary}
+discoveries <- lapply(resolution.list, function(resolution) {
+  discoveries.file <- sprintf("%s/example_res%s_discoveries.txt", res.dir, resolution)
+  discoveries.res <- read_delim(discoveries.file, delim=" ", col_types=cols()) %>%
+    mutate(Resolution=factor(resolution, levels=resolution.list, labels=resolution.list))
+})
+discoveries <- do.call("rbind", discoveries)
+discoveries %>% 
+  complete(Resolution) %>% 
+  group_by(Resolution) %>% 
+  summarise(Discoveries=sum(!is.na(Group))) %>%
+  kable(align='cc') %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F)
+```
+
+### Visualizing the discoveries
+```{r visualize-discoveries-setup, eval=F}
+source("../visualization/utils_clumping.R")
+source("../visualization/utils_plotting.R")
+source("../visualization/utils_shiny.R")
+# Download the gene and variant annotations if they are not available
+cmd <- "cd ../misc; ./download_annotations.sh; cd ../notebooks"
+#system(cmd)
+# Load gene and variant annotations
+annotations <- load_annotations("../data")
+# Location of LMM p-values
+lmm.dir <- "../data/lmm"
+# Load results
+results <- load_association_results(res.dir, lmm.dir, "example")
+```
+
+```{r visualize-discoveries, warning=F, fig.width=14, fig.height=10, fig.align="center", eval=F}
+window.chr <- 21
+window.boundaries <- find_chr_boundaries(results, window.chr)
+window.left <- window.boundaries$min.BP
+window.right <- window.boundaries$max.BP
+plot_combined(window.chr, window.left, window.right,
+              results$Discoveries,
+              results$LMM,
+              results$LMM.clumped,
+              Annotations.func=annotations$Annotations.func,
+              Exons.canonical=annotations$Exons.canonical)
+```
+
+```{r visualize-discoveries-2, warning=F, fig.width=14, fig.height=10, fig.align="center", eval=F}
+window.chr <- 21
+window.center <- 14.9
+window.width <- 0.2
+window.left <- (window.center-window.width/2)*1e6
+window.right <- (window.center+window.width/2)*1e6
+plot_combined(window.chr, window.left, window.right,
+              results$Discoveries,
+              results$LMM,
+              results$LMM.clumped,
+              Annotations.func=annotations$Annotations.func,
+              Exons.canonical=annotations$Exons.canonical)
+```
