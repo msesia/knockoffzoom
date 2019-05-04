@@ -2,6 +2,7 @@ suppressMessages(library(ggrepel))
 suppressMessages(library(latex2exp))
 suppressMessages(library(egg))
 suppressMessages(library(grid))
+suppressMessages(library(cowplot))
 
 font.size <- 18
 title.font.size <- 18
@@ -139,8 +140,8 @@ plot_pvalues <- function(window.chr, window.left, window.right, LMM, LMM.clumped
         left_join(LMM.clumped, by = c("SNP", "CHR", "BP")) %>%
         mutate(BP.lead=factor(BP.lead))
 
-    cat(sprintf("There are %d LMM pvalues within this window, %d of which are significant.\n",
-                nrow(LMM.window), sum(LMM.window$P<p.significant)))
+    #cat(sprintf("There are %d LMM pvalues within this window, %d of which are significant.\n",
+    #            nrow(LMM.window), sum(LMM.window$P<p.significant)))
 
     # Extract clumps that overlap with this window
     LMM.clumped.window <- LMM.clumped %>% filter(CHR==window.chr) %>%
@@ -150,8 +151,8 @@ plot_pvalues <- function(window.chr, window.left, window.right, LMM, LMM.clumped
         select(CHR, SNP.lead) %>%
         inner_join(LMM.clumped, by = c("CHR", "SNP.lead"))
 
-    cat(sprintf("There are %d LMM clumps that overlap with this window.\n",
-                length(unique(LMM.clumped.window$SNP.lead))))
+    #cat(sprintf("There are %d LMM clumps that overlap with this window.\n",
+    #            length(unique(LMM.clumped.window$SNP.lead))))
 
     # Manhattan plot
     if(nrow(LMM.window)>0) {
@@ -258,7 +259,7 @@ plot_chicago <- function(window.chr, window.left, window.right, Discoveries) {
     if(!is.null(Discoveries)) {
         Knockoffs.window <- Discoveries %>% filter(Method=="Knockoffs") %>%
             filter(CHR==window.chr, BP.min<=window.right, BP.max>=window.left)
-        cat(sprintf("There are %d knockoff discoveries within this window.\n", nrow(Knockoffs.window)))
+        #cat(sprintf("There are %d knockoff discoveries within this window.\n", nrow(Knockoffs.window)))
     } else {
         Knockoffs.window <- tibble()
     }
@@ -334,8 +335,8 @@ plot_annotations <- function(window.chr, window.left, window.right, Annotations.
     # Select functional annotations within this window
     Functional.window <- Annotations.func %>%
         filter(chrom==window.chr, chromStart<=window.right, chromEnd>=window.left)
-    cat(sprintf("There are %d functional annotations within this window.\n",
-                nrow(Functional.window)))
+    #cat(sprintf("There are %d functional annotations within this window.\n",
+    #            nrow(Functional.window)))
 
     # Make plot
     if(nrow(Functional.window)>0) {
@@ -372,8 +373,8 @@ plot_genes <- function(window.chr, window.left, window.right, Exons.canonical,
     # Select exons within this windows
     Exons.window <- Exons.canonical %>%
         filter(chrom==window.chr, txStart<=window.right, txEnd>=window.left)
-    cat(sprintf("There are %d exons within this window, divided into %d genes.\n",
-                nrow(Exons.window), length(unique(Exons.window$name2))))
+    #cat(sprintf("There are %d exons within this window, divided into %d genes.\n",
+    #            nrow(Exons.window), length(unique(Exons.window$name2))))
 
 
     # Find out how many genes there are and determine whether we would plot all of them

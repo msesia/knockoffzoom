@@ -23,7 +23,9 @@ OUT_DIR="../results"
 mkdir -p $OUT_DIR
 
 # List of chromosomes
-CHR_LIST=($(seq 21 22))
+CHR_MIN=21
+CHR_MAX=21
+CHR_LIST=($(seq $CHR_MIN $CHR_MAX))
 
 # List of resolutions
 RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
@@ -31,6 +33,7 @@ RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
 # Utility scripts
 BED_TO_FBM="Rscript --vanilla utils/make_FBM.R"
 COMPUTE_STATS="Rscript --vanilla utils/lasso.R"
+AUGMENT_GENOTYPES="utils/augment_genotypes.sh"
 
 # Which operations should we perform?
 FLAG_MAKE_FBM=1
@@ -51,32 +54,12 @@ if [[ $FLAG_MAKE_FBM == 1 ]]; then
     echo "Processing at resolution "$RESOLUTION" ..."
     echo ""
 
+    # Basename for genotypes
+    GEN_BASENAME="../tmp/example_res"$RESOLUTION
     # Basename for output FBM
     OUT_BASENAME=$TMP_DIR"/example_res"$RESOLUTION
-
-    # Make list of chromosomes to be merged with the first one
-    GEN_BASENAME="../tmp/example_res"$RESOLUTION
-    MERGE_LIST=$GEN_BASENAME"_mergelist.txt"
-    rm -f $MERGE_LIST
-    touch $MERGE_LIST
-    for CHR in ${CHR_LIST[@]}; do
-      if [ $CHR != ${CHR_LIST[0]} ]; then
-        # Basename for the augmented genotype file for this chromosome    
-        CHR_BASENAME="../tmp/example_chr"$CHR"_res"$RESOLUTION
-        echo $CHR_BASENAME >> $MERGE_LIST
-      fi
-    done
-
-    # Merge the augmented data from all chromosomes
-    CHR_FIRST=${CHR_LIST[0]}
-    CHR_BASENAME_FIRST="../tmp/example_chr"$CHR_FIRST"_res"$RESOLUTION
-    plink \
-      --bfile $CHR_BASENAME_FIRST \
-      --merge-list $MERGE_LIST \
-      --make-bed \
-      --memory 5000 \
-      --out $OUT_BASENAME
-
+    # Combine genotypes and knockoffs into bed
+    $AUGMENT_GENOTYPES $GEN_BASENAME $OUT_BASENAME $RESOLUTION $CHR_MIN $CHR_MAX
     # Convert augmented BED to FBM
     $BED_TO_FBM $OUT_BASENAME $OUT_BASENAME
 
@@ -106,19 +89,14 @@ if [[ $FLAG_COMPUTE_STATS == 1 ]]; then
 
     # Augmented genotypes in FBM format
     FBM_FILE=$TMP_DIR"/example_res"$RESOLUTION".rds"
-
     # Knockoff key basename (wildcard ? for chromosome number)
     KEY_BASENAME=$TMP_DIR"/example_chr?_res"$RESOLUTION".key"
-
     # Phenotype file
     PHENO_FILE=$PHENO_DIR"/phenotypes.tab"
-
     # Phenotype name
     PHENO_NAME="y"
-
     # Output file
     OUT_BASENAME=$TMP_DIR"/example_res"$RESOLUTION
-
     # Compute test statistics
     $COMPUTE_STATS $FBM_FILE $KEY_BASENAME $PHENO_FILE $PHENO_NAME $OUT_BASENAME
 
