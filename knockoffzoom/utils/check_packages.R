@@ -35,8 +35,17 @@ check.packages.bio(packages.bio)
 check.packages.dev <- function(pkg){
     new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
     if (length(new.pkg)) 
-        devtools::install_github(sprintf("%s", new.pkg))
+        devtools::install_github(sprintf("privefl/%s", new.pkg))
     sapply(pkg, require, character.only = TRUE)
 }
-packages.dev <- c("privefl/bigstatsr", "privefl/bigsnpr", "msesia/SNPknock")
+packages.dev <- c("bigstatsr", "bigsnpr")
+check.packages.dev(packages.dev)
+
+check.packages.dev <- function(pkg){
+    new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+    if (length(new.pkg)) 
+        devtools::install_github(sprintf("msesia/%s", new.pkg))
+    sapply(pkg, require, character.only = TRUE)
+}
+packages.dev <- c("SNPknock")
 check.packages.dev(packages.dev)

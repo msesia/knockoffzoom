@@ -1,25 +1,28 @@
 ---
 title: "KnockoffZoom Tutorial"
 author: "Matteo Sesia"
-date: "May 03, 2019"
+date: "May 04, 2019"
 output:
   html_document:
-    toc: true
-    toc_float: true
+    toc: yes
+    toc_float: yes
   html_notebook:
-    toc: true
-    toc_float: true
+    toc: yes
+    toc_float: yes
 ---
+
+```{r options, echo=F}
+knitr::opts_chunk$set(cache=TRUE)
+```
 
 ## Introduction
 
-This tutorial will guide you through each step of the KnockoffZoom analysis on a toy dataset
-containing 1000 artificial samples typed at 2000 loci.
+In this tutorial, we apply the KnockoffZoom method to toy dataset and guide you through each step of the analysis.
 
+### System requirements
 
-### Dependencies
-
-The following software should be available from your Unix path:
+This tutorial is intended to be exectuted on a Linux system. 
+Before continuing, please ensure that the following software is available and executable.
 
    - [PLINK 1.9](https://www.cog-genomics.org/plink/1.9/)
    - [PLINK 2.0](https://www.cog-genomics.org/plink/2.0/) alpha
@@ -28,13 +31,25 @@ The following software should be available from your Unix path:
    - [GNU awk](https://github.com/onetrueawk/awk) 4.0.2
    - [GNU Core Utilities](https://www.gnu.org/software/coreutils/) 8.22
 
+Furthermore, you will need the following R packages to run `KnockoffZoom`.
+
+   - [SNPknock](https://msesia.github.io/snpknock/) 0.8.2
+   - [adjclust](https://CRAN.R-project.org/package=adjclust ) 0.5.6
+   - [bigsnpr](https://privefl.github.io/bigsnpr/) 0.9.1
+   - [bigstatsr](https://privefl.github.io/bigstatsr/) 0.8.4
+   - [snpStats](https://doi.org/doi:10.18129/B9.bioc.snpStats) 1.32
+   - [Matrix](https://CRAN.R-project.org/package=Matrix ) 1.2.15
+   - [data.table](https://CRAN.R-project.org/package=data.table) 1.12.0
+   - [tidyverse](https://www.tidyverse.org/) 1.2.1
+   - [devtools](https://CRAN.R-project.org/package=devtools) 1.13.6
+
+This script will check whether the are available and, if they are not, install them for you.
 
 ```{r dependencies-R, message=F}
 system("Rscript --vanilla ../knockoffzoom/utils/check_packages.R")
 ```
 
-### Setup
-
+Finally, this notebook requires a few packages in addition to the `KnockoffZoom` core.
 ```{r, message=FALSE}
 library(tidyverse)
 library(gridExtra)
@@ -43,39 +58,45 @@ library(kableExtra)
 library(ggdendro)
 ```
 
+### The data
+
+The toy dataset provided with `KnockoffZoom` contains 1000 artificial samples typed at 2000 loci.
+These loci are divided equally between chromosomes 21 and 22.
 
 ```{r}
 chr.min <- 21
 chr.max <- 22
 chr.list <- seq(chr.min, chr.max)
-tmp.dir <- "tmp"
-dir.create(tmp.dir, showWarnings = FALSE)
-res.dir <- "results"
-dir.create(res.dir, showWarnings = FALSE)
 ```
 
+The genetic data are stored in the standard "BED/BIM/FAM" format, while the phased haplotypes are encoded in a BGEN 1.3 file.
+
+For completeness, we also provide you with a list of individuals and variants that passed quality control.
+However, all individuals and variants passed quality control in this toy dataset.
 ```{r}
 # List of individuals that passed QC
 qc.samples <- "../data/qc/samples_qc.txt"
-
 # List of variants that passed QC
 qc.variants <- "../data/qc/variants_qc.txt"
+```
 
+The phenotypes are saved in a tab-separated text file that also contains information on the sex of the subjects.
+
+```{r}
 # Phenotype file
 pheno.file <- "../data/phenotypes/phenotypes.tab"
-
 # Phenotype name
 pheno.name <- "y"
 ```
 
-### Preview of the data
-
+Out of curiosity, let's take a quick look at the distribution of the phenotypes.
 ```{r phenotypes, fig.width=6, fig.height=3.5, fig.align="center"}
 phenotypes <- read_tsv(pheno.file, col_types=cols())
 phenotypes %>% mutate(sex=as.factor(sex)) %>%
   ggplot(aes(x=sex, y=y)) + geom_boxplot() + theme_bw()
 ```
 
+The complete list of genetic variants can be inspected as follows. 
 ```{r genotypes}
 # Load list of variants in the dataset
 Variants <- lapply(chr.list, function(chr) {
@@ -95,7 +116,19 @@ Variants
 ```
 
 
+### Preparing for KnockoffZoom
+
+Before we apply `KnockoffZoom`, let's create temporary directories to store the final results and the intermediate processed information. 
+```{r}
+tmp.dir <- "tmp"
+dir.create(tmp.dir, showWarnings = FALSE)
+res.dir <- "results"
+dir.create(res.dir, showWarnings = FALSE)
+```
+
 ## Module 1
+
+With the first module `KnockoffZoom`, we recode the phased haplotypes into the correct format and feed them to `fastPHASE` to fit an HMM.
 
 ### Haplotype conversion
 
@@ -119,7 +152,7 @@ for(chr in chr.list) {
   # Basename for output haplotype file
   inp.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
   # Convert haplotypes into INP file
-  #bgen.to.inp(bgen.basename, chr, qc.samples, qc.variants, inp.basename)
+  bgen.to.inp(bgen.basename, chr, qc.samples, qc.variants, inp.basename)
 }
 ```
 
@@ -142,17 +175,25 @@ for(chr in chr.list) {
   # Basename for hmm file
   hmm.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
   # Fit HMM
-  #fit.hmm(inp.file, hmm.basename)
+  fit.hmm(inp.file, hmm.basename)
 }
 ```
 
 ## Module 2
 
+With the second module `KnockoffZoom`, we partition the genome into LD blocks to define the hypotheses tested in our multi-resolution analysis.
+In this example, we use the following 5 levels of resolution. 
+
 ```{r}
-resolution.list <- c("2", "5", "10", "20", "50", "100")
+resolution.list <- c(2, 5, 10, 20, 50)
 ```
 
+These numerical values describe each resolution as the number of LD blocks, as a percentage of the total number of available SNPS.
+Therefore, at the highest resolution each LD block contains on average 2 SNPs.
+
 ### LD clustering
+
+We begin by applying adjacency-constrained clustering to each chromosome, using the $r^2$ coefficients computed with PLINK as a similarity measure between the SNPs.
 
 ```{r LD-cluster}
 cluster.ld <- function(geno.basename, geno.bim, qc.variants, dendro.file) {
@@ -161,7 +202,7 @@ cluster.ld <- function(geno.basename, geno.bim, qc.variants, dendro.file) {
   # LD table computed by PLINK
   ld.file <- sprintf("%s.ld", ld.basename)
   # Compute LD matrix with PLINK
-  cmd <- sprintf("plink --bfile %s --keep %s --extract %s --r2 --freq --ld-window 1000 --ld-window-kb 1000 --ld-window-r2 0.01 --out %s",
+  cmd <- sprintf("plink --bfile %s --keep %s --extract %s --r2 dprime --freq --ld-window 1000 --ld-window-kb 1000 --ld-window-r2 0.01 --out %s",
                  geno.basename, qc.samples, qc.variants, ld.basename)
   system(cmd)
   # Compute dendrogram with adjacency-constrained clustering
@@ -179,11 +220,13 @@ for(chr in chr.list) {
   # Dendrogram file
   dendro.file <- sprintf("%s/example_chr%d.RData", tmp.dir, chr)
   # Cluster the genome
-  #cluster.ld(geno.basename, geno.bim, qc.variants, dendro.file)
+  cluster.ld(geno.basename, geno.bim, qc.variants, dendro.file)
 }
 ```
 
 ### Visualizing the dendrogram
+
+As an illustration, the clustering computed above can be visualized in the following dendrogram.
 
 ```{r visualize-dendrogram, message=F, warning=F, fig.width=7, fig.height=3, fig.align="center", results="hide", eval=F}
 chr <- chr.list[1]
@@ -210,6 +253,8 @@ dendro.data %>%
 
 ### Partitioning
 
+The LD blocks at different resolutions are obtained by cutting the dendrogram at different heights.
+
 ```{r partition}
 partition.ld <- function(dendro.file, geno.bim, qc.variants, resolution, blocks.basename) {
   cmd <- "Rscript --vanilla ../knockoffzoom/utils/partition.R"
@@ -227,12 +272,14 @@ for(chr in chr.list) {
     # Basename for list of blocks at this resolution
     blocks.basename <- sprintf("%s/example_chr%d", tmp.dir, chr)
     # Partition the genome
-    #partition.ld(dendro.file, geno.bim, qc.variants, resolution, blocks.basename)
+    partition.ld(dendro.file, geno.bim, qc.variants, resolution, blocks.basename)
   }
 }
 ```
 
 ### Summary of the LD blocks
+
+The average number of SNPs and width (in Mb) of the LD blocks at each resolution are summarized below.
 
 ```{r LD-summary}
 blocks <- lapply(resolution.list, function(resolution) {
@@ -251,6 +298,8 @@ blocks %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F)
 ```
 
+We can also look at the distribution of block sizes at any particular resolution.
+
 ```{r LD-group-sizes, warning=F, fig.width=5, fig.height=3, fig.align="center"}
 blocks.res <- blocks %>% 
   filter(Resolution=="10") %>%
@@ -264,6 +313,8 @@ blocks.res %>% ggplot(aes(x=Size)) +
 ```
 
 ## Module 3
+
+With the third module `KnockoffZoom`, we generate knockoffs to test the multi-resolution hypotheses defined above.
 
 ### Knockoff generation
 
@@ -293,15 +344,19 @@ for(chr in chr.list) {
     # Basename for knockoffs at this resolution
     knockoffs.basename <- sprintf("%s/example_chr%d_res%s", tmp.dir, chr, resolution)
     # Generate the knockoffs
-    #generate.knockoffs(hmm.basename, inp.basename, blocks.file, knockoffs.basename)
+    generate.knockoffs(hmm.basename, inp.basename, blocks.file, knockoffs.basename)
   }
 }
 ```
 
 ### Knockoff diagnostics
 
+Let's verify whether the knockoffs that we have generated are indeed exchangeable with genotypes.
+Since the sample size is relatively small in this example, we expect to see some noise in the following goodness-of-fit diagnostics.
+
 ```{r knockoff-diagnostics-def}
 source("../knockoffzoom/utils/knockoffs_gof.R")
+
 diagnose.knockoffs <- function(chr, resolution) {
   # Basename for knockoffs at this resolution
   knockoffs.basename <- sprintf("%s/example_chr%d_res%s", tmp.dir, chr, resolution)
@@ -316,21 +371,24 @@ diagnose.knockoffs <- function(chr, resolution) {
                  knockoffs.basename, diagnostics.basename)
   system(cmd)
   # Basename for plots
-  plot.basename <- sprintf("%s/example_chr%d_res%s", res.dir, chr, resolution)
+  plot.basename <- sprintf("%s/example_chr%d_res%s", res.dir, 21, 10)
   # Plot knockoff diagnostics
   pp <- plot.knockoff.diagnostics(diagnostics.basename, key.file, blocks.file, plot.basename)
 }
 ```
 
 ```{r knockoff-diagnostics, fig.width=6, fig.height=6, fig.align="center"}
-# Compute diagnostics with PLINK
-#diagnose.knockoffs(chr.list[1], resolution.list[1])
+# Compute diagnostics with PLINK and plot them
+diagnose.knockoffs(21, 10)
 ```
-
 
 ## Module 4
 
+With the fourth module `KnockoffZoom`, we compute feature importance statistics for the genotypes and their knockoffs, by fitting a multivariate predictive model of the trait. In this example, we use sparse linear regression with cross-validation. Then, we compute test statistics for each LD block, resolution-by-resolution.
+
 ### Memory mapping
+
+We adopt an efficient implementation of sparse linear regression that is suitable for very large datasets that do not fit in memory. Therefore, we first convert the genotypes and the knockoffs into a memory-mapped file (file-backed matrix, FBM) that we will later be able to process efficiently.
 
 ```{r make-FBM}
 make.fbm <- function(gen.basename, fbm.basename, resolution) {
@@ -352,11 +410,13 @@ for(resolution in resolution.list) {
   # Basename for knockoff-augmented genotype files
   gen.basename <- sprintf("%s/example", tmp.dir)
   # Merge the augmented data from all chromosomes and make FBM
-  #make.fbm(fbm.basename, gen.basename, resolution)
+  make.fbm(gen.basename, fbm.basename, resolution)
 }
 ```
 
 ### Computating test statistics
+
+Now we fit the sparse regression model, tuning the regularization penalty by cross-validation, and compute the test statistics.
 
 ```{r test-stats}
 compute.stats <- function(fbm.file, key.basename, pheno.file, pheno.name, stats.basename) {
@@ -374,13 +434,16 @@ for(resolution in resolution.list) {
   # Basename for statistics file
   stats.basename <- sprintf("%s/example_res%s", tmp.dir, resolution)
   # Compute test statistics
-  #compute.stats(fbm.file, key.basename, pheno.file, pheno.name, stats.basename)
+  compute.stats(fbm.file, key.basename, pheno.file, pheno.name, stats.basename)
 }
 ```
 
 ## Module 5
 
 ### Filtering the test statistics
+
+The significance threshold for the test statistics is calibrated by the knockoff filter. 
+By default, in this example the nominal FDR level is 0.1. The discoveries made at each resolution will be saved in the "results" sub-directory.
 
 ```{r filter-stats}
 filter.stats <- function(stats.basename, blocks.basename, results.basename) {
@@ -396,13 +459,15 @@ for(resolution in resolution.list) {
   # Basename for results file
   results.basename <- sprintf("%s/example_res%s", res.dir, resolution)
   # Filter stats and report discoveries
-  #filter.stats(stats.basename, blocks.basename, results.basename)
+  filter.stats(stats.basename, blocks.basename, results.basename)
 }
 ```
 
 ## Results
 
 ### Summary of discoveries
+
+The numbers of distinct discoveries reported at each resolution as listed below.
 
 ```{r discoveries-summary}
 discoveries <- lapply(resolution.list, function(resolution) {
@@ -420,13 +485,17 @@ discoveries %>%
 ```
 
 ### Visualizing the discoveries
-```{r visualize-discoveries-setup, eval=F}
+
+The discoveries can be visualized interactively with our Shiny app.
+Two examples are provided here.
+
+```{r visualize-discoveries-setup}
 source("../visualization/utils_clumping.R")
 source("../visualization/utils_plotting.R")
 source("../visualization/utils_shiny.R")
 # Download the gene and variant annotations if they are not available
 cmd <- "cd ../misc; ./download_annotations.sh; cd ../notebooks"
-#system(cmd)
+system(cmd)
 # Load gene and variant annotations
 annotations <- load_annotations("../data")
 # Location of LMM p-values
@@ -435,7 +504,7 @@ lmm.dir <- "../data/lmm"
 results <- load_association_results(res.dir, lmm.dir, "example")
 ```
 
-```{r visualize-discoveries, warning=F, fig.width=14, fig.height=10, fig.align="center", eval=F}
+```{r visualize-discoveries, warning=F, fig.width=14, fig.height=10, fig.align="center"}
 window.chr <- 21
 window.boundaries <- find_chr_boundaries(results, window.chr)
 window.left <- window.boundaries$min.BP
@@ -448,7 +517,7 @@ plot_combined(window.chr, window.left, window.right,
               Exons.canonical=annotations$Exons.canonical)
 ```
 
-```{r visualize-discoveries-2, warning=F, fig.width=14, fig.height=10, fig.align="center", eval=F}
+```{r visualize-discoveries-2, warning=F, fig.width=14, fig.height=10, fig.align="center"}
 window.chr <- 21
 window.center <- 14.9
 window.width <- 0.2

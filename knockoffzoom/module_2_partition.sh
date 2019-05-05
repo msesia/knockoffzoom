@@ -19,7 +19,7 @@ mkdir -p $TMP_DIR
 CHR_LIST=$(seq 21 22)
 
 # List of resolutions
-RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
+RESOLUTION_LIST=("2" "5" "10" "20" "50")
 
 # Utility scripts
 CLUSTER_VARIANTS="Rscript --vanilla utils/cluster.R"
@@ -62,7 +62,7 @@ if [[ $FLAG_COMPUTE_LD == 1 ]]; then
     plink \
       --bfile $GENO_BASENAME \
       --keep $QC_SAMPLES --extract $QC_VARIANTS \
-      --r2 --ld-window 1000 --ld-window-kb 1000 --ld-window-r2 0.01 \
+      --r2 dprime --ld-window 1000 --ld-window-kb 1000 --ld-window-r2 0.01 \
       --freq \
       --out $OUT_BASENAME
 

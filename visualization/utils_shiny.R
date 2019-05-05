@@ -129,7 +129,7 @@ load_annotations <- function(data_dir) {
 load_association_results <- function(data_dir, lmm_dir, phenotype){
 
     # Load knockoffs discovereries
-    resolution.list <- c("res2", "res5", "res10", "res20", "res50", "res100")
+    resolution.list <- c("res2", "res5", "res10", "res20", "res50")
     phenotype.list <- c(phenotype)
     Params <- expand.grid(Resolution=resolution.list, Phenotype=phenotype.list) %>% as_tibble()
     Discoveries <- lapply(1:nrow(Params), function(idx) {

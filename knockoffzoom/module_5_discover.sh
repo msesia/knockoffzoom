@@ -24,7 +24,8 @@ mkdir -p $OUT_DIR
 CHR_LIST=($(seq 21 22))
 
 # List of resolutions
-RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
+RESOLUTION_LIST=("2" "5" "10" "20" "50")
+#RESOLUTION_LIST=("5")
 
 # Utility scripts
 FILTER_STATS="Rscript --vanilla utils/filter_stats.R"

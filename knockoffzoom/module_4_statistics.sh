@@ -24,16 +24,16 @@ mkdir -p $OUT_DIR
 
 # List of chromosomes
 CHR_MIN=21
-CHR_MAX=21
+CHR_MAX=22
 CHR_LIST=($(seq $CHR_MIN $CHR_MAX))
 
 # List of resolutions
-RESOLUTION_LIST=("2" "5" "10" "20" "50" "100")
+RESOLUTION_LIST=("2" "5" "10" "20" "50")
 
 # Utility scripts
+AUGMENT_GENOTYPES="utils/augment_genotypes.sh"
 BED_TO_FBM="Rscript --vanilla utils/make_FBM.R"
 COMPUTE_STATS="Rscript --vanilla utils/lasso.R"
-AUGMENT_GENOTYPES="utils/augment_genotypes.sh"
 
 # Which operations should we perform?
 FLAG_MAKE_FBM=1
@@ -54,10 +54,10 @@ if [[ $FLAG_MAKE_FBM == 1 ]]; then
     echo "Processing at resolution "$RESOLUTION" ..."
     echo ""
 
-    # Basename for genotypes
-    GEN_BASENAME="../tmp/example_res"$RESOLUTION
     # Basename for output FBM
     OUT_BASENAME=$TMP_DIR"/example_res"$RESOLUTION
+    # Basename for genotypes
+    GEN_BASENAME="../tmp/example_res"$RESOLUTION
     # Combine genotypes and knockoffs into bed
     $AUGMENT_GENOTYPES $GEN_BASENAME $OUT_BASENAME $RESOLUTION $CHR_MIN $CHR_MAX
     # Convert augmented BED to FBM

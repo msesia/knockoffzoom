@@ -63,12 +63,12 @@ printf "\nData analysis\n"
 
 # Module 1: fit the HMM
 start_spinner ' - Running module 1...'
-#./module_1_hmm.sh &> "../"$LOG_FILE
+./module_1_hmm.sh &> "../"$LOG_FILE
 stop_spinner $?
 
 # Module 2: partition the genome into LD blocks
 start_spinner ' - Running module 2...'
-#./module_2_partition.sh &>> "../"$LOG_FILE
+./module_2_partition.sh &>> "../"$LOG_FILE
 stop_spinner $?
 
 # Module 3: generate the knockoffs
@@ -78,12 +78,12 @@ stop_spinner $?
 
 # Module 4: compute the test statistics
 start_spinner ' - Running module 4...'
-#./module_4_statistics.sh &>> "../"$LOG_FILE
+./module_4_statistics.sh &>> "../"$LOG_FILE
 stop_spinner $?
 
 # Module 5: report significant findings
 start_spinner ' - Running module 5...'
-#./module_5_discover.sh &>> "../"$LOG_FILE
+./module_5_discover.sh &>> "../"$LOG_FILE
 stop_spinner $?
 
 #####################
