@@ -23,7 +23,7 @@ For more information, read the accompanying [paper](https://www.biorxiv.org/cont
 
 <p class="comment">
 <i>Multi-resolution localization of causal variants across the genome</i><br>
-Matteo Sesia, Eugene Katsevich, Stephen Bates, Emmanuel Candès, Chiara Sabatti<br>
+M. Sesia, E. Katsevich, S. Bates, E. Candès, C. Sabatti<br>
 bioRxiv 631390; doi: https://doi.org/10.1101/631390
 </p>
 
