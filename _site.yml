@@ -1,25 +1,29 @@
-name: "KnockoffZoom"                                # CHANGE HERE 
+name: "KnockoffZoom"
 output_dir: "."
 navbar:
-  title: "KnockoffZoom"                             # CHANGE HERE 
+  title: "KnockoffZoom"
   type: inverse
   left:
     - text: "Home"
       icon: fa-home
       href: index.html
-    - text: "Tutorial"
-      icon: fa-chalkboard-teacher
-      href: tutorial.html
     - text: "UK Biobank"
       icon: fa-dna
       href: ukbiobank.html
+    - text: "Tutorial"
+      icon: fa-chalkboard-teacher
+      href: tutorial.html
     - text: "Code"
       icon: fa-github
-      href: https://github.com/msesia/knockoffzoom       # CHANGE HERE 
+      href: https://github.com/msesia/knockoffzoom
+    - text: "Articles"
+      menu:
+       - text: "Flowchart"
+         href: flowchart.html
   right:
     - text: "Contact"
       icon: fa-envelope-o
-      href: mailto:msesia@stanford.edu                    # CHANGE HERE 
+      href: mailto:msesia@stanford.edu
 output:
   html_document:
     theme: cosmo

@@ -293,17 +293,17 @@ $(document).ready(function () {
   </a>
 </li>
 <li>
-  <a href="tutorial.html">
-    <span class="fa fa-chalkboard-teacher"></span>
-     
-    Tutorial
-  </a>
-</li>
-<li>
   <a href="ukbiobank.html">
     <span class="fa fa-dna"></span>
      
     UK Biobank
+  </a>
+</li>
+<li>
+  <a href="tutorial.html">
+    <span class="fa fa-chalkboard-teacher"></span>
+     
+    Tutorial
   </a>
 </li>
 <li>
@@ -312,6 +312,18 @@ $(document).ready(function () {
      
     Code
   </a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="flowchart.html">Flowchart</a>
+    </li>
+  </ul>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -336,23 +348,15 @@ $(document).ready(function () {
 </div>
 
 
-<p>KnockoffZoom is a powerful and versatile statistical method for the analysis of genome-wide association data.</p>
+<p>KnockoffZoom is a flexible tool for the multi-resolution localization of causal variants across the genome.</p>
 <div id="overview" class="section level2">
 <h2>Overview</h2>
-<p>The goal of <em>KnockoffZoom</em> is to identify causal variants for complex traits effectively and precisely through genome-wide fine-mapping, accounting for linkage disequilibrium and provably controlling the false discovery rate. The results leverage the genetic models used for phasing and are equally valid for quantitative and binary traits.</p>
-<p>We partition the genome into contiguous LD blocks and test whether the trait is independent of the SNPs in any block, conditioning on the others. The resolution of the hypotheses is determined by the size and homogeneity of the LD blocks, which we choose in advance. To balance power and resolution, one can consider multiple partitions, starting with a coarse view and successively refining it. Some of the results obtained at different resolutions for the phenotype “height” in the UK Biobank are visualized below.</p>
+<p><em>KnockoffZoom</em> localizes causal variants precisely and provably controls the false discovery rate using artificial genotypes as negative controls. Our method is equally valid for quantitative and binary phenotypes, making no assumptions about their genetic architectures. Instead, we rely on well-established genetic models of linkage disequilibrium.</p>
+<p>We partition the genome into contiguous LD blocks and test whether the trait is independent of the SNPs in any block, conditioning on the others. The resolution of the hypotheses is determined by the size and homogeneity of the LD blocks, which we choose in advance. To balance power and resolution, we consider multiple partitions, starting with a coarse view and successively refining it. Some of the results obtained at different resolutions for the phenotype “height” in the UK Biobank are visualized below.</p>
 <p>For more information, read the accompanying paper (coming soon).</p>
 <p style="text-align:center;">
 <img src="images/chicago.png" alt="KnockoffZoom discoveries"
     title="KnockoffZoom discoveries" width="80%" height="80%" />
-</p>
-</div>
-<div id="flowchart" class="section level2">
-<h2>Flowchart</h2>
-<p>The <em>KnockoffZoom</em> methodology is divided into different modules, as summarized in the following flowchart. The code is available from the <a href="https://github.com/msesia/knockoffzoom">GitHub repository</a>, along with a toy dataset and a working example.</p>
-<p style="text-align:center;">
-<img src="images/flowchart.png" alt="KnockoffZoom flowchart"
-    title="KnockoffZoom flowchart" width="80%" height="80%" />
 </p>
 </div>
 

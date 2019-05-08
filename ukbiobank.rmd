@@ -2,7 +2,11 @@
 title: "Analysis of the UK Biobank data"
 ---
 
-We have applied KnockoffZoom to the analysis of several traits in the [UK Biobank](https://www.ukbiobank.ac.uk/) and obtained many new findings, as discussed in the accompanying paper.
+We apply KnockoffZoom to some traits in the [UK Biobank](https://www.ukbiobank.ac.uk/) data and obtain many new findings. To learn more, read the accompanying paper.
 
 To explore our results interactively, visit: [https://msesia.shinyapps.io/knockoffzoom/](https://msesia.shinyapps.io/knockoffzoom/)
 
+<p style="text-align:center;">
+<img src="images/annotations.png" alt="Annotated KnockoffZoom discoveries"
+	title="Annotated KnockoffZoom discoveries" width="80%" height="80%" />
+</p>
