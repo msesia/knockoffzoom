@@ -7,16 +7,19 @@ navbar:
     - text: "Home"
       icon: fa-home
       href: index.html
+    - text: "Tutorial"
+      icon: fa-chalkboard-teacher
+      href: tutorial.html
     - text: "UK Biobank"
       icon: fa-dna
       href: ukbiobank.html
+    - text: "Code"
+      icon: fa-github
+      href: https://github.com/msesia/knockoffzoom       # CHANGE HERE 
   right:
     - text: "Contact"
       icon: fa-envelope-o
       href: mailto:msesia@stanford.edu                    # CHANGE HERE 
-    - text: "GitHub"
-      icon: fa-github
-      href: https://github.com/msesia/knockoffzoom       # CHANGE HERE 
 output:
   html_document:
     theme: cosmo
