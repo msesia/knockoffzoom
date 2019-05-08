@@ -19,10 +19,13 @@ knitr::opts_chunk$set(cache=TRUE)
 
 In this tutorial, we apply the KnockoffZoom method to toy dataset and guide you through each step of the analysis.
 
-### System requirements
+### Getting started
 
-This tutorial is intended to be exectuted on a Linux system. 
-Before continuing, please ensure that the following software is available and executable.
+First, download *KnockoffZoom* from this [repository](https://github.com/msesia/knockoffzoom).
+The repository includes the core of *KnockoffZoom* and a copy of this notebook that can be easily executed.
+
+Second, ensure that the following software is available and executable.
+Note that *KnockoffZoom* is designed for Linux systems.
 
    - [PLINK 1.9](https://www.cog-genomics.org/plink/1.9/)
    - [PLINK 2.0](https://www.cog-genomics.org/plink/2.0/) alpha
@@ -31,7 +34,7 @@ Before continuing, please ensure that the following software is available and ex
    - [GNU awk](https://github.com/onetrueawk/awk) 4.0.2
    - [GNU Core Utilities](https://www.gnu.org/software/coreutils/) 8.22
 
-Furthermore, you will need the following R packages to run `KnockoffZoom`.
+You will also need the following R packages to run `KnockoffZoom`.
 
    - [SNPknock](https://msesia.github.io/snpknock/) 0.8.2
    - [adjclust](https://CRAN.R-project.org/package=adjclust ) 0.5.6
