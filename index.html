@@ -348,16 +348,30 @@ $(document).ready(function () {
 </div>
 
 
+<style>
+p.comment {
+background-color: #DBDBDB;
+padding: 10px;
+border: 1px solid black;
+margin-left: 25px;
+border-radius: 5px;
+}
+
+</style>
 <p>KnockoffZoom is a flexible tool for the multi-resolution localization of causal variants across the genome.</p>
 <div id="overview" class="section level2">
 <h2>Overview</h2>
 <p><em>KnockoffZoom</em> localizes causal variants precisely and provably controls the false discovery rate using artificial genotypes as negative controls. Our method is equally valid for quantitative and binary phenotypes, making no assumptions about their genetic architectures. Instead, we rely on well-established genetic models of linkage disequilibrium.</p>
-<p>We partition the genome into contiguous LD blocks and test whether the trait is independent of the SNPs in any block, conditioning on the others. The resolution of the hypotheses is determined by the size and homogeneity of the LD blocks, which we choose in advance. To balance power and resolution, we consider multiple partitions, starting with a coarse view and successively refining it. Some of the results obtained at different resolutions for the phenotype “height” in the UK Biobank are visualized below.</p>
-<p>For more information, read the accompanying paper (coming soon).</p>
+<p>For more information, read the accompanying <a href="https://www.biorxiv.org/content/10.1101/631390v1">paper</a>:</p>
+<p class="comment">
+<i>Multi-resolution localization of causal variants across the genome</i><br> Matteo Sesia, Eugene Katsevich, Stephen Bates, Emmanuel Candès, Chiara Sabatti<br> bioRxiv 631390; doi: <a href="https://doi.org/10.1101/631390" class="uri">https://doi.org/10.1101/631390</a>
+</p>
+<p> </p>
 <p style="text-align:center;">
 <img src="images/chicago.png" alt="KnockoffZoom discoveries"
     title="KnockoffZoom discoveries" width="80%" height="80%" />
 </p>
+<p>We partition the genome into contiguous LD blocks and test whether the trait is independent of the SNPs in any block, conditioning on the others. The resolution of the hypotheses is determined by the size and homogeneity of the LD blocks, which we choose in advance. To balance power and resolution, we consider multiple partitions, starting with a coarse view and successively refining it. Some of the results obtained at different resolutions for the phenotype “height” in the UK Biobank are visualized below.</p>
 </div>
 
 
