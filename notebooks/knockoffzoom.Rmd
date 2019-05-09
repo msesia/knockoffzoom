@@ -417,7 +417,7 @@ for(resolution in resolution.list) {
 }
 ```
 
-### Computating test statistics
+### Computing test statistics
 
 Now we fit the sparse regression model, tuning the regularization penalty by cross-validation, and compute the test statistics.
 
