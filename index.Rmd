@@ -19,12 +19,12 @@ KnockoffZoom is a flexible tool for the multi-resolution localization of causal 
 
 *KnockoffZoom* localizes causal variants precisely and provably controls the false discovery rate using artificial genotypes as negative controls. Our method is equally valid for quantitative and binary phenotypes, making no assumptions about their genetic architectures. Instead, we rely on well-established genetic models of linkage disequilibrium.
 
-For more information, read the accompanying [paper](https://www.biorxiv.org/content/10.1101/631390v1):
+For more information, read the accompanying <a target="_blank" href="https://www.biorxiv.org/content/10.1101/631390v1">paper</a>:
 
 <p class="comment">
 <i>Multi-resolution localization of causal variants across the genome</i><br>
 M. Sesia, E. Katsevich, S. Bates, E. Candès, C. Sabatti<br>
-bioRxiv 631390; doi: https://doi.org/10.1101/631390
+bioRxiv 631390; doi: <a target="_blank" href="https://doi.org/10.1101/631390">https://doi.org/10.1101/631390</a>
 </p>
 
 &nbsp;

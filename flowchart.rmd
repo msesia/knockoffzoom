@@ -3,7 +3,7 @@ title: "Flowchart"
 ---
 
 The *KnockoffZoom* methodology is divided into different modules, as summarized in the following flowchart.
-The code is available from the [GitHub repository](https://github.com/msesia/knockoffzoom), along with a toy dataset and a working example.
+The code is available from the <a href="https://github.com/msesia/knockoffzoom" target="_blank">GitHub repository</a>.
 
 <p style="text-align:center;">
 <img src="images/flowchart.png" alt="KnockoffZoom flowchart"
