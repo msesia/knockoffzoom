@@ -16,10 +16,6 @@ navbar:
     - text: "Code"
       icon: fa-github
       href: https://github.com/msesia/knockoffzoom
-    - text: "Articles"
-      menu:
-       - text: "Flowchart"
-         href: flowchart.html
   right:
     - text: "Contact"
       icon: fa-envelope-o
