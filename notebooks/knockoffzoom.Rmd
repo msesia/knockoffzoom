@@ -1,5 +1,5 @@
 ---
-title: "KnockoffZoom Tutorial"
+title: "*KnockoffZoom* Tutorial"
 author: "Matteo Sesia"
 date: "May 04, 2019"
 output:
@@ -17,7 +17,7 @@ knitr::opts_chunk$set(cache=TRUE)
 
 ## Introduction
 
-In this tutorial, we apply the KnockoffZoom method to toy dataset and guide you through each step of the analysis.
+In this tutorial, we apply the *KnockoffZoom* method to toy dataset and guide you through each step of the analysis.
 
 ### Getting started
 
@@ -34,7 +34,7 @@ Note that *KnockoffZoom* is designed for Linux systems.
    - <a href="https://github.com/onetrueawk/awk" target="_blank">GNU awk</a> 4.0.2
    - <a href="https://www.gnu.org/software/coreutils/" target="_blank">GNU Core Utilities</a> 8.22
 
-You will also need the following R packages to run `KnockoffZoom`.
+You will also need the following R packages to run *KnockoffZoom*.
 
    - <a href="https://msesia.github.io/snpknock/" target="_blank">SNPknock</a> 0.8.2
    - <a href="https://CRAN.R-project.org/package=adjclust" target="_blank">adjclust</a> 0.5.6
@@ -52,7 +52,7 @@ This script will check whether the are available and, if they are not, install t
 system("Rscript --vanilla ../knockoffzoom/utils/check_packages.R")
 ```
 
-Finally, this notebook requires a few packages in addition to the `KnockoffZoom` core.
+Finally, this notebook requires a few packages in addition to the *KnockoffZoom* core.
 ```{r, message=FALSE}
 library(tidyverse)
 library(gridExtra)
@@ -63,7 +63,7 @@ library(ggdendro)
 
 ### The data
 
-The toy dataset provided with `KnockoffZoom` contains 1000 artificial samples typed at 2000 loci.
+The toy dataset provided with *KnockoffZoom* contains 1000 artificial samples typed at 2000 loci.
 These loci are divided equally between chromosomes 21 and 22.
 
 ```{r}
@@ -119,9 +119,9 @@ Variants
 ```
 
 
-### Preparing for KnockoffZoom
+### Preparing for *KnockoffZoom*
 
-Before we apply `KnockoffZoom`, let's create temporary directories to store the final results and the intermediate processed information. 
+Before we apply *KnockoffZoom*, let's create temporary directories to store the final results and the intermediate processed information. 
 ```{r}
 tmp.dir <- "tmp"
 dir.create(tmp.dir, showWarnings = FALSE)
@@ -129,9 +129,19 @@ res.dir <- "results"
 dir.create(res.dir, showWarnings = FALSE)
 ```
 
+## Flowchart
+
+The *KnockoffZoom* method is organized in 5 modules, as summarized by the flowchart below.
+In the following, we will apply it step-by-step to the analysis of the above toy dataset.
+
+<p style="text-align:center;">
+<img src="flowchart.png" alt="KnockoffZoom flowchart"
+	title="KnockoffZoom flowchart" width="80%" height="80%" />
+</p>
+
 ## Module 1
 
-With the first module `KnockoffZoom`, we recode the phased haplotypes into the correct format and feed them to `fastPHASE` to fit an HMM.
+With the first module *KnockoffZoom*, we recode the phased haplotypes into the correct format and feed them to `fastPHASE` to fit an HMM.
 
 ### Haplotype conversion
 
@@ -184,7 +194,7 @@ for(chr in chr.list) {
 
 ## Module 2
 
-With the second module `KnockoffZoom`, we partition the genome into LD blocks to define the hypotheses tested in our multi-resolution analysis.
+With the second module *KnockoffZoom*, we partition the genome into LD blocks to define the hypotheses tested in our multi-resolution analysis.
 In this example, we use the following 5 levels of resolution. 
 
 ```{r}
@@ -317,7 +327,7 @@ blocks.res %>% ggplot(aes(x=Size)) +
 
 ## Module 3
 
-With the third module `KnockoffZoom`, we generate knockoffs to test the multi-resolution hypotheses defined above.
+With the third module *KnockoffZoom*, we generate knockoffs to test the multi-resolution hypotheses defined above.
 
 ### Knockoff generation
 
@@ -387,7 +397,7 @@ diagnose.knockoffs(21, 10)
 
 ## Module 4
 
-With the fourth module `KnockoffZoom`, we compute feature importance statistics for the genotypes and their knockoffs, by fitting a multivariate predictive model of the trait. In this example, we use sparse linear regression with cross-validation. Then, we compute test statistics for each LD block, resolution-by-resolution.
+With the fourth module *KnockoffZoom*, we compute feature importance statistics for the genotypes and their knockoffs, by fitting a multivariate predictive model of the trait. In this example, we use sparse linear regression with cross-validation. Then, we compute test statistics for each LD block, resolution-by-resolution.
 
 ### Memory mapping
 
