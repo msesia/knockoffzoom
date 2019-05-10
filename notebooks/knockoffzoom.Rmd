@@ -136,7 +136,7 @@ In the following, we will apply it step-by-step to the analysis of the above toy
 
 <p style="text-align:center;">
 <img src="flowchart.png" alt="KnockoffZoom flowchart"
-	title="KnockoffZoom flowchart" width="80%" height="80%" />
+	title="KnockoffZoom flowchart" width="100%" height="100%" />
 </p>
 
 ## Module 1
