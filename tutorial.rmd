@@ -1,3 +1,8 @@
+---
+title: "Tutorial"
+---
+
+<head>
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110810441-3"></script>
 <script>
@@ -7,10 +12,7 @@
 
   gtag('config', 'UA-110810441-3');
 </script>
-
----
-title: "Tutorial"
----
+</head> 
 
 <style>
 .vignette-frame {

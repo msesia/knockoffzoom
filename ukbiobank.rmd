@@ -1,3 +1,8 @@
+---
+title: "Analysis of the UK Biobank data"
+---
+
+<head>
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110810441-3"></script>
 <script>
@@ -7,10 +12,7 @@
 
   gtag('config', 'UA-110810441-3');
 </script>
-
----
-title: "Analysis of the UK Biobank data"
----
+</head> 
 
 We apply KnockoffZoom to some traits in the <a target="_blank" href="https://www.ukbiobank.ac.uk/">UK Biobank</a> data and obtain many new findings. To learn more, read the accompanying <a target="_blank" href="https://www.biorxiv.org/content/10.1101/631390v1">paper</a>.
 
