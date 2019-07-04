@@ -28,5 +28,6 @@ notebooks/tmp/
 notebooks/results/
 notebooks/*.html
 tmp/
-results/
 data/annotations/
+flymd.html
+flymd.md
