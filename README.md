@@ -85,7 +85,7 @@ The modular nature of our method allows the code contained in each of the 5 main
 
 ## Authors
 
-   - [Matteo Sesia](http://web.stanford.edu/~msesia/) (Stanford University).
+   - [Matteo Sesia](https://msesia.github.io/) (Stanford University).
 
 ## Contributors
 
