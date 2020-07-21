@@ -85,11 +85,11 @@ The modular nature of our method allows the code contained in each of the 5 main
 
 ## Authors
 
-   - [Matteo Sesia](https://msesia.github.io/) (Stanford University).
+   - [Matteo Sesia](https://msesia.github.io/) (University of Southern California).
 
 ## Contributors
 
-   - [Eugene Katsevich](http://web.stanford.edu/~ekatsevi/) (Stanford University). User interface of the Shiny visualization app.
+   - [Eugene Katsevich](http://web.stanford.edu/~ekatsevi/) (University of Pennsylvania). User interface of the Shiny visualization app.
 
 ## License
 
