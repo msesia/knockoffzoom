@@ -5,7 +5,7 @@ A powerful and versatile statistical method for the analysis of genome-wide asso
 Accompanying paper:
 > *Multi-resolution localization of causal variants across the genome* <br />
 > M. Sesia, E. Katsevich, S. Bates, E. Candès, C. Sabatti <br />
-> bioRxiv 631390; doi: [https://doi.org/10.1101/631390](https://doi.org/10.1101/631390)
+> Nat Commun 11, 1093 (2020). [https://doi.org/10.1038/s41467-020-14791-2](https://doi.org/10.1038/s41467-020-14791-2)
 
 For more information, visit: [https://msesia.github.io/knockoffzoom](https://msesia.github.io/knockoffzoom).
 
