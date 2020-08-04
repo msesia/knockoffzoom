@@ -9,6 +9,8 @@ Accompanying paper:
 
 For more information, visit: [https://msesia.github.io/knockoffzoom](https://msesia.github.io/knockoffzoom).
 
+**News**: A [new version of KnockoffZoom](https://msesia.github.io/knockoffzoom-v2/) is available, which can also account for population structure and familial relatedness.
+
 ## Overview
 
 The goal of *KnockoffZoom* is to identify causal variants for complex traits effectively and precisely through genome-wide fine-mapping, accounting for linkage disequilibrium and controlling the false discovery rate.
