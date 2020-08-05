@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 
@@ -85,7 +85,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -234,6 +233,7 @@ $(document).ready(function () {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -245,18 +245,6 @@ $(document).ready(function () {
   display: none;
 }
 </style>
-
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
 
 <!-- code folding -->
 
@@ -322,6 +310,13 @@ $(document).ready(function () {
     Contact
   </a>
 </li>
+<li>
+  <a href="https://msesia.github.io">
+    <span class="fa fa-address-card"></span>
+     
+    About me
+  </a>
+</li>
       </ul>
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -358,19 +353,23 @@ border-radius: 5px;
 
 </style>
 <p>KnockoffZoom is a flexible tool for the multi-resolution localization of causal variants across the genome.</p>
+<div id="news" class="section level2">
+<h2>News</h2>
+<p>A <a href="https://msesia.github.io/knockoffzoom-v2/">new version of KnockoffZoom</a> is available, which can also account for population structure and familial relatedness.</p>
+</div>
 <div id="overview" class="section level2">
 <h2>Overview</h2>
-<p><em>KnockoffZoom</em> localizes causal variants precisely and provably controls the false discovery rate using artificial genotypes as negative controls. Our method is equally valid for quantitative and binary phenotypes, making no assumptions about their genetic architectures. Instead, we rely on well-established genetic models of linkage disequilibrium.</p>
+<p>KnockoffZoom localizes causal variants precisely and provably controls the false discovery rate using artificial genotypes as negative controls. Our method is equally valid for quantitative and binary phenotypes, making no assumptions about their genetic architectures. Instead, we rely on well-established genetic models of linkage disequilibrium.</p>
 <p>For more information, read the accompanying <a target="_blank" href="https://www.biorxiv.org/content/10.1101/631390v1">paper</a>:</p>
 <p class="comment">
-<i>Multi-resolution localization of causal variants across the genome</i><br> M. Sesia, E. Katsevich, S. Bates, E. Candès, C. Sabatti<br> bioRxiv 631390; doi: <a target="_blank" href="https://doi.org/10.1101/631390">https://doi.org/10.1101/631390</a>
+<i>Multi-resolution localization of causal variants across the genome</i><br> M. Sesia, E. Katsevich, S. Bates, E. Candès, C. Sabatti<br> Nature Communications, 11, 1093 (2020). <a target="_blank" href="https://www.nature.com/articles/s41467-020-14791-2">https://www.nature.com/articles/s41467-020-14791-2</a>
 </p>
 <p> </p>
 <p style="text-align:center;">
 <img src="images/chicago.png" alt="KnockoffZoom discoveries"
     title="KnockoffZoom discoveries" width="80%" height="80%" />
 </p>
-<p>We partition the genome into contiguous LD blocks and test whether the trait is independent of the SNPs in any block, conditioning on the others. The resolution of the hypotheses is determined by the size and homogeneity of the LD blocks, which we choose in advance. To balance power and resolution, we consider multiple partitions, starting with a coarse view and successively refining it. Some of the results obtained at different resolutions for the phenotype “height” in the UK Biobank are visualized below.</p>
+<p>We partition the genome into contiguous LD blocks and test whether the trait is independent of the SNPs in any block, conditioning on the others. The resolution of the hypotheses is determined by the size and homogeneity of the LD blocks, which we choose in advance. To balance power and resolution, we consider multiple partitions, starting with a coarse view and successively refining it. Some of the results obtained at different resolutions for the phenotype &quot;height&quot; in the UK Biobank are visualized below.</p>
 </div>
 
 
@@ -390,6 +389,23 @@ $(document).ready(function () {
 
 
 </script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
