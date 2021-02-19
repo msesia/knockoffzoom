@@ -9,7 +9,7 @@ Accompanying paper:
 
 For more information, visit: [https://msesia.github.io/knockoffzoom](https://msesia.github.io/knockoffzoom).
 
-**News**: A [new version of KnockoffZoom](https://msesia.github.io/knockoffzoom-v2/) is available, which can also account for population structure and familial relatedness.
+**News**: A [new version of KnockoffZoom](https://msesia.github.io/knockoffgwas/) is available, which can also account for population structure and familial relatedness.
 
 ## Overview
 
